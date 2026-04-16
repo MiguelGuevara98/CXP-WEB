@@ -1,0 +1,12 @@
+Flask
+gunicorn
+pandas
+requests
+openpyxl
+xlrd
+lxml
+beautifulsoup4
+html5lib
+lxml==5.2.1
+html5lib==1.1
+beautifulsoup4==4.12.3
