@@ -4,14 +4,14 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/cxp-web:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA'
       - '.'
 
   # Sube la imagen al registro
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/cxp-web:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA'
 
   # Despliega en Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -21,7 +21,7 @@ steps:
       - 'deploy'
       - 'cxp-web'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/cxp-web:$COMMIT_SHA'
+      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA'
       - '--region'
       - 'us-central1'
       - '--platform'
