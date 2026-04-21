@@ -113,7 +113,7 @@ INDEX_HTML = """
 
     <aside id="sidebar" class="sidebar-transition w-64 bg-white border-r border-gray-200 flex flex-col shrink-0 shadow-sm z-20">
         <div class="p-6 text-center mt-8">
-            <h2 class="text-lg font-bold tracking-wider text-gray-800">CUENTAS<br>persPOR PAGAR</h2>
+            <h2 class="text-lg font-bold tracking-wider text-gray-800">CUENTAS<br>pePOR PAGAR</h2>
         </div>
         <div class="mt-8 px-6 flex-1">
             <a href="#" class="block px-4 py-3 text-sm font-bold text-white bg-blue-600 rounded-lg shadow-md text-center hover:bg-blue-700 transition-colors">
