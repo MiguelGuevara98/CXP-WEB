@@ -2,6 +2,7 @@ import os
 import json 
 import math
 import tempfile
+import time
 import traceback
 from decimal import Decimal, InvalidOperation
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -12,6 +13,15 @@ from requests.auth import HTTPBasicAuth
 BASE_URL = "https://fa-eqwz-saasfaprod1.fa.ocs.oraclecloud.com/fscmRestApi/resources/11.13.18.05/invoices"
 MAX_WORKERS = 10
 TIMEOUT = 60
+
+# ==============================================================
+#  🔧 CONFIGURACIÓN DE REINTENTOS (para errores de conexión)
+#  MAX_REINTENTOS : cuántas veces reintenta antes de marcar error
+#  ESPERA_REINTENTO: segundos base entre intentos (backoff lineal)
+#                    intento 1 → 2s, intento 2 → 4s, intento 3 → 6s
+# ==============================================================
+MAX_REINTENTOS   = 3
+ESPERA_REINTENTO = 2  # segundos base
 
 COL_FOLIO = "Folio C.F.D.I."
 COL_TOTAL = "Total"
@@ -82,10 +92,29 @@ class ProcesadorOracle:
         })
         return session
 
+    def _get_con_reintento(self, session, url):
+        """
+        Ejecuta un GET con reintentos automáticos ante errores de conexión.
+        Aplica backoff lineal entre intentos: 2s, 4s, 6s...
+        Lanza la excepción original si agota todos los intentos.
+        """
+        ultimo_error = None
+        for intento in range(1, MAX_REINTENTOS + 1):
+            try:
+                response = session.get(url, timeout=TIMEOUT)
+                response.raise_for_status()
+                return response
+            except Exception as e:
+                ultimo_error = e
+                if intento < MAX_REINTENTOS:
+                    espera = ESPERA_REINTENTO * intento
+                    print(f"[REINTENTO {intento}/{MAX_REINTENTOS}] GET {url} → {type(e).__name__} | esperando {espera}s")
+                    time.sleep(espera)
+        raise ultimo_error
+
     def query_invoice_by_folio(self, session, folio):
         url_cruda = f"{BASE_URL}?q=InvoiceNumber={folio}"
-        response = session.get(url_cruda, timeout=TIMEOUT)
-        response.raise_for_status()
+        response = self._get_con_reintento(session, url_cruda)
         return response.json()
 
     def process_row(self, row_dict):
@@ -124,7 +153,8 @@ class ProcesadorOracle:
             return result
             
         except Exception as e:
-            result["_message"] = f"Error: {str(e)}"
+            tipo_err = type(e).__name__   # ej: "ConnectionError", "Timeout", "HTTPError"
+            result["_message"] = f"Error tras {MAX_REINTENTOS} reintentos: {tipo_err}"
             return result
 
     def ejecutar_cruce(self):
