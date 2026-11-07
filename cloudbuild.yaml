@@ -1,3 +1,6 @@
+# Pipeline de Cloud Build (se ejecuta con cada push por el trigger configurado en GCP).
+# SOLO construye y publica la imagen en Artifact Registry.
+# El despliegue a Cloud Run es MANUAL (ver README, sección "Despliegue").
 steps:
   # Construye la imagen Docker
   - name: 'gcr.io/cloud-builders/docker'
@@ -12,20 +15,6 @@ steps:
     args:
       - 'push'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA'
-
-  # Despliega en Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'cxp-web'
-      - '--image'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA'
-      - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
 
 options:
   logging: CLOUD_LOGGING_ONLY

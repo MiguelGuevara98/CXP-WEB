@@ -3,3 +3,6 @@ __pycache__/
 env/
 venv/
 .env
+
+# Referencia de diseño (UI Kit Coltrane, no se versiona)
+Ui Kit GCD Argentina/
