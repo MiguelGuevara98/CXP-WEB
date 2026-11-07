@@ -6,3 +6,6 @@ venv/
 
 # Referencia de diseño (UI Kit Coltrane, no se versiona)
 Ui Kit GCD Argentina/
+
+# Instalador generado (scripts/generar_instalador.py)
+dist/

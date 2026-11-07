@@ -5,7 +5,7 @@ Aplicación web interna del área de **Cuentas por Pagar (CxP)**.
 > **Estado actual:** solo existe la **interfaz (UI)**. Se eliminó la lógica anterior de conciliación contra Oracle y queda pendiente implementar el nuevo procesamiento. Los endpoints que usa el frontend existen como esqueleto y responden `501`.
 
 - **Stack:** Python 3.10 · Flask · Tailwind (CDN) · gunicorn
-- **Despliegue:** Docker → Artifact Registry → Cloud Run (`cxp-web`, `us-central1`) mediante Cloud Build
+- **Despliegue:** Cloud Run en una **cuenta nueva de GCP**, todavía por configurar. El proyecto ya no está vinculado a ninguna cuenta de GCP; se instala con el script de la sección 5.
 
 ---
 
@@ -15,8 +15,10 @@ Aplicación web interna del área de **Cuentas por Pagar (CxP)**.
 CXP-WEB/
 ├── run.py                 # Punto de entrada (gunicorn usa run:app)
 ├── requirements.txt       # Flask, gunicorn
-├── Dockerfile
-├── cloudbuild.yaml        # Pipeline build → push → deploy a Cloud Run
+├── Dockerfile             # Imagen para Cloud Run (gunicorn en $PORT)
+├── .dockerignore
+├── scripts/
+│   └── generar_instalador.py   # Genera dist/instalar_cxp_web.sh (ver sección 5)
 └── data/
     └── main/
         ├── app.py         # Rutas Flask (vistas + endpoints pendientes)
@@ -79,24 +81,34 @@ docker run -p 8080:8080 -e PORT=8080 cxp-web
 
 ## 5. Despliegue
 
-> **El despliegue automático está desactivado.** Un push ya no actualiza Cloud Run.
+El proyecto **no está vinculado a ninguna cuenta de GCP**: no tiene `cloudbuild.yaml` ni trigger. Para llevarlo a la cuenta nueva se usa un instalador de un solo archivo.
 
-Con cada push, el trigger de Cloud Build (configurado en la consola de GCP, no versionado en el repo) ejecuta `cloudbuild.yaml`, que **solo** hace dos pasos:
-
-1. `docker build` → `us-central1-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/cxp-web:$COMMIT_SHA`
-2. `docker push` de esa imagen a Artifact Registry
-
-Los logs van solo a Cloud Logging.
-
-**Despliegue manual** de un commit ya construido (desde Cloud Shell o con `gcloud` autenticado):
+### 5.1 Generar el instalador (aquí, en local)
 
 ```bash
-gcloud run deploy cxp-web \
-  --image us-central1-docker.pkg.dev/<PROJECT_ID>/cloud-run-source-deploy/cxp-web:<COMMIT_SHA_COMPLETO> \
-  --region us-central1 --platform managed
+python scripts/generar_instalador.py
 ```
 
-Para volver al despliegue automático, agrega de nuevo ese paso `gcloud run deploy` al final de `cloudbuild.yaml`. Si en cambio quieres que un push no construya nada, desactiva el trigger en *Cloud Build → Activadores*.
+Esto crea `dist/instalar_cxp_web.sh` (ignorado por git). El instalador contiene **todos** los archivos del proyecto que no están en `.gitignore`: los de texto van legibles y los binarios en base64. Al final verifica cada archivo con sha256.
+
+### 5.2 Instalar en Cloud Shell (cuenta nueva)
+
+1. Abre Cloud Shell en el proyecto nuevo.
+2. Crea el archivo y pega el contenido: `cloudshell edit instalar_cxp_web.sh` (o súbelo con *Más ⋮ → Subir*).
+3. Ejecuta:
+   ```bash
+   bash instalar_cxp_web.sh          # crea ./cxp-web  (o: bash instalar_cxp_web.sh otra_carpeta)
+   ```
+4. Prueba en Cloud Shell (*Vista previa en la Web*, puerto 8080):
+   ```bash
+   cd cxp-web
+   python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt && python run.py
+   ```
+5. Despliega en Cloud Run:
+   ```bash
+   gcloud run deploy cxp-web --source . --region us-central1 --allow-unauthenticated
+   ```
+   `--source .` construye la imagen con el `Dockerfile` usando Cloud Build y Artifact Registry, que se crean bajo demanda. `--allow-unauthenticated` hace la app pública; quítalo si el acceso debe ser restringido (IAM o IAP).
 
 ---
 
