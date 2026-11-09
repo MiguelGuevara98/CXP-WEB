@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block titulo %}Cargar facturas{% endblock %}
+{% block estilos %}<link rel="stylesheet" href="{{ url_for('static', filename='css/carga.css') }}">{% endblock %}
+{% block config %}ambientesCarga: {{ ambientes_carga | tojson }},{% endblock %}
+{% block contenido %}
+
+            <!-- Proceso en pestañas: cada paso avanza solo al siguiente al terminar -->
+            <section class="card">
+                <div class="p-6 pb-0 flex items-center gap-4">
+                    <img src="{{ url_for('static', filename='img/spot-documentos.svg') }}" alt="" class="w-12 h-12 shrink-0">
+                    <div class="min-w-0 mr-auto">
+                        <h2 class="text-2xl font-semibold text-ink">Carga de facturas</h2>
+                    </div>
+                    <button id="btnLimpiarLote" class="btn btn-secondary" onclick="confirmarLimpiarLote()" disabled title="Borrar el lote cargado y empezar de nuevo">
+                        <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/remove-circle.svg') }}')"></span>
+                        Limpiar
+                    </button>
+                </div>
+
+                <div class="pestanas mt-6 px-6" role="tablist">
+                    <button id="paso1" class="pestana activo" role="tab" onclick="mostrarPestana(1)"><span>1</span> Subir XML</button>
+                    <button id="paso2" class="pestana" role="tab" onclick="mostrarPestana(2)" disabled><span>2</span> Descargar plantilla</button>
+                    <button id="paso3" class="pestana" role="tab" onclick="mostrarPestana(3)" disabled><span>3</span> Subir plantilla llena</button>
+                    <button id="paso4" class="pestana" role="tab" onclick="mostrarPestana(4)" disabled><span>4</span> Cargar en Oracle</button>
+                </div>
+
+                <!-- Pestaña 1: subir XML -->
+                <div id="tab1" class="tab-panel p-6" role="tabpanel">
+                    <p class="text-sm text-ink-soft mb-4">Sube tus facturas</p>
+                    <input type="file" id="inputArchivos" multiple accept=".zip,.xml" class="hidden">
+                    <input type="file" id="inputCarpeta" webkitdirectory directory multiple class="hidden">
+                    <div id="zonaArrastre" class="zona" role="region" aria-label="Zona para arrastrar archivos">
+                        <span class="icon text-primary" style="width:40px;height:40px;--src: url('{{ url_for('static', filename='icons/add-circle.svg') }}')"></span>
+                        <p class="mt-3 text-base font-semibold text-ink" id="textoZona">Arrastra aquí la carpeta, el .zip o los XML</p>
+                        <p class="mt-1 text-xs text-ink-soft">o elige desde tu equipo</p>
+                        <div class="mt-4 flex flex-wrap justify-center gap-3">
+                            <button class="btn btn-secondary" onclick="$('inputArchivos').click()">
+                                <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/add-circle.svg') }}')"></span>
+                                Zip o XML
+                            </button>
+                            <button class="btn btn-secondary" onclick="$('inputCarpeta').click()" title="Chrome pedirá confirmar la carga de la carpeta">
+                                <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/list-view.svg') }}')"></span>
+                                Carpeta
+                            </button>
+                            {% if drive_activo %}
+                            <button id="btnDrive" class="btn btn-secondary" onclick="traerDrive(this)" title="Toma las facturas de la carpeta de Drive del área">
+                                <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/download.svg') }}')"></span>
+                                Traer de Drive
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="mt-4 text-sm text-ink-soft">¿Ya tienes la plantilla llena? <button type="button" class="font-medium underline" style="color: var(--color-interactive-primary);" onclick="$('inputPlantilla').click()">Súbela aquí</button>.</p>
+                </div>
+
+                <!-- Pestaña 2: descargar plantilla -->
+                <div id="tab2" class="tab-panel p-6 hidden" role="tabpanel">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="mr-auto">
+                            <h3 class="text-lg font-semibold text-ink">Plantilla del lote <span id="textoLote">-</span></h3>
+                            <p class="text-sm text-ink-soft mt-1">Descarga la plantilla de Excel y llena las columnas blancas con los datos del ticket.</p>
+                        </div>
+                        <a id="btnPlantilla" href="/carga/plantilla" class="btn btn-primary">
+                            <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/download.svg') }}')"></span>
+                            Descargar plantilla
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pestaña 3: subir plantilla llena -->
+                <div id="tab3" class="tab-panel p-6 hidden" role="tabpanel">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="mr-auto">
+                            <h3 class="text-lg font-semibold text-ink">Sube la plantilla llena</h3>
+                            <p class="text-sm text-ink-soft mt-1">Se validan los datos capturados y se generan las facturas. ¿Te falta la plantilla?
+                               <a href="/carga/plantilla" class="font-medium underline" style="color: var(--color-interactive-primary);">Descárgala de nuevo</a>.</p>
+                        </div>
+                        <input type="file" id="inputPlantilla" accept=".xlsx" class="hidden">
+                        <button id="btnSubirPlantilla" class="btn btn-primary" onclick="$('inputPlantilla').click()">
+                            <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/add-circle.svg') }}')"></span>
+                            Subir plantilla llena
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pestaña 4: cargar en Oracle -->
+                <div id="tab4" class="tab-panel p-6 hidden" role="tabpanel">
+                    <div id="bloqueCarga" class="flex flex-wrap items-center gap-4">
+                        <div class="mr-auto">
+                            <h3 class="text-lg font-semibold text-ink">Cargar en Oracle {{ ambiente }}</h3>
+                            <p id="textoCarga" class="text-sm text-ink-soft mt-1"></p>
+                            <p class="text-sm text-ink-soft mt-1">¿Corregiste algo? <button type="button" class="font-medium underline" style="color: var(--color-interactive-primary);" onclick="$('inputPlantilla').click()">Sube la plantilla otra vez</button> y se actualiza lo que se enviará.</p>
+                        </div>
+                        <button id="btnCargar" class="btn btn-primary" onclick="confirmarCarga()">Cargar en Oracle DEV</button>
+                    </div>
+                    <div id="panelCarga" class="hidden mt-6 pt-6 border-t border-bg0">
+                        <!-- En proceso -->
+                        <div id="cargaProgreso">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h3 class="text-xl font-semibold text-ink mr-auto">Cargando en Oracle {{ ambiente }}</h3>
+                                <span class="text-xs text-ink-soft" id="cargaTiempo"></span>
+                            </div>
+                            <ol class="linea-pasos mt-5">
+                                <li id="pc-ucm"><span class="punto"></span><b>Subir archivo</b></li>
+                                <li id="pc-loader"><span class="punto"></span><b>Cargar a interfaz</b></li>
+                                <li id="pc-import"><span class="punto"></span><b>Importar facturas</b></li>
+                                <li id="pc-confirmar"><span class="punto"></span><b>Confirmar</b></li>
+                            </ol>
+                            <p id="cargaActual" class="mt-5 flex items-center gap-2 text-sm text-ink-soft"></p>
+                        </div>
+
+                        <!-- Resultado -->
+                        <div id="cargaResultado" class="hidden">
+                            <div class="flex items-start gap-4">
+                                <span id="resIcono" class="res-icono"><span class="icon"></span></span>
+                                <div class="mr-auto">
+                                    <h3 id="resTitulo" class="text-xl font-semibold text-ink"></h3>
+                                    <p id="resSubtitulo" class="text-sm text-ink-soft mt-1"></p>
+                                </div>
+                            </div>
+                            <p id="resError" class="hidden mt-4 rounded-sm px-4 py-3 text-sm" style="background:#FFECEA; color: var(--color-text-error);"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resultados -->
+            <section class="card flex flex-col">
+                <div class="px-6 pt-6 pb-4 flex flex-wrap items-center gap-3">
+                    <div class="mr-auto">
+                        <h3 class="text-xl font-semibold text-ink" id="tituloTabla">Facturas del lote</h3>
+                        <p id="contadorLote" class="text-xs text-ink-soft mt-1">0 resultados</p>
+                    </div>
+                    <div id="resumen" class="flex flex-wrap gap-2"></div>
+                </div>
+                <div class="overflow-auto px-2 max-h-[560px]">
+                    <table class="tabla w-full border-collapse min-w-[900px]">
+                        <thead>
+                            <tr>
+                                <th class="num w-12">No.</th>
+                                <th>UUID</th>
+                                <th>Unidad de negocio</th>
+                                <th>Fecha de timbrado</th>
+                                <th class="num">Total</th>
+                                <th>Estado</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaLote"></tbody>
+                    </table>
+                </div>
+            </section>
+            <!-- Aviso mientras se suben o revisan archivos -->
+            <div id="procesando" class="hidden fixed inset-0 z-40 flex items-center justify-center px-4" style="background: rgba(8, 23, 84, .35);" role="status" aria-live="polite">
+                <div class="card w-full max-w-sm px-8 py-10 text-center" style="box-shadow: var(--shadow-float);">
+                    <span class="spinner spinner-grande"></span>
+                    <h3 id="procTitulo" class="mt-6 text-lg font-semibold text-ink"></h3>
+                    <p id="procMensaje" class="mt-1 text-sm text-ink-soft"></p>
+                    <div id="procBarra" class="hidden mt-6 h-2 rounded-full bg-bg0 overflow-hidden">
+                        <div class="h-2 rounded-full bg-primary" style="width: 0%; transition: width .2s ease-out;"></div>
+                    </div>
+                </div>
+            </div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/carga.js') }}"></script>{% endblock %}

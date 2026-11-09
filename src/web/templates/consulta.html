@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block titulo %}Gestión de facturas{% endblock %}
+{% block contenido %}
+
+            <!-- Encabezado de sección -->
+            <section class="card p-6 flex items-start gap-4">
+                <img src="{{ url_for('static', filename='img/spot-documentos.svg') }}" alt="" class="w-12 h-12 shrink-0">
+                <div class="min-w-0">
+                    <h2 class="text-2xl font-semibold text-ink">Gestión de facturas</h2>
+                    <p class="mt-1 text-sm text-ink-soft">Adjunta el reporte de facturas (columnas <b>Folio C.F.D.I.</b> y <b>Total</b>) para consultarlas en Oracle <b>{{ ambiente }}</b>. Al terminar podrás descargar la conciliación en Excel.</p>
+                </div>
+            </section>
+
+            <!-- Tabla -->
+            <section class="card flex flex-col min-h-[420px]">
+                <div class="px-6 pt-6 pb-4 flex flex-wrap items-center gap-4">
+                    <div class="min-w-0">
+                        <h3 class="text-xl font-semibold text-ink">Facturas del reporte</h3>
+                        <p id="contadorResultados" class="text-xs text-ink-soft mt-1">0 resultados</p>
+                    </div>
+
+                    <div id="contenedorContador" class="hidden">
+                        <span id="badgeContador" class="badge badge-info">
+                            <span id="labelContador">Facturas detectadas:</span>
+                            <span id="textoContador" class="font-semibold">0</span>
+                        </span>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 ml-auto">
+                        <input type="file" id="fileInput" accept=".xls,.xlsx,.htm,.html" class="hidden">
+
+                        <button id="btnLimpiar" onclick="confirmarLimpiar()" disabled class="btn btn-secondary">
+                            <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/remove-circle.svg') }}')"></span>
+                            Limpiar
+                        </button>
+                        <button id="btnAdjuntar" onclick="document.getElementById('fileInput').click()" class="btn btn-secondary">
+                            <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/add-circle.svg') }}')"></span>
+                            <span id="textoAdjuntar">Adjuntar reporte</span>
+                        </button>
+                        <button id="btnImportar" onclick="confirmarProcesar()" disabled class="btn btn-primary">
+                            <span id="textoImportar">Consultar en Oracle</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progreso -->
+                <div id="contenedorProgreso" class="hidden px-6 pb-4">
+                    <div class="flex justify-between text-xs font-medium text-ink-soft mb-2">
+                        <span id="textoProgreso">Consultando Oracle...</span>
+                        <span id="porcentajeProgreso">0%</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-bg0 overflow-hidden">
+                        <div id="barraProgreso" class="barra h-2 rounded-full bg-primary" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-auto px-2">
+                    <table class="tabla w-full border-collapse min-w-[640px]">
+                        <thead>
+                            <tr>
+                                <th class="num w-16">No.</th>
+                                <th>Folio CFDI</th>
+                                <th>Factura</th>
+                                <th>RFC</th>
+                                <th>Resultado</th>
+                                <th>Validación</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaBody"></tbody>
+                    </table>
+                </div>
+
+                <!-- Pie: paginación + descarga -->
+                <div class="px-6 py-4 flex flex-wrap items-center gap-4 border-t border-bg0">
+                    <nav id="paginacion" class="flex items-center gap-1" aria-label="Paginación"></nav>
+                    <button id="btnDescargar" onclick="window.location.href='/descargar'" disabled class="btn btn-primary ml-auto">
+                        <span class="icon icon-sm" style="--src: url('{{ url_for('static', filename='icons/download.svg') }}')"></span>
+                        Descargar resultados
+                    </button>
+                </div>
+            </section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/consulta.js') }}"></script>{% endblock %}

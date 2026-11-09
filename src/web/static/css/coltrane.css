@@ -1,0 +1,100 @@
+/* Sistema de diseño Coltrane [Bubble] (Coppel): tokens y componentes base.
+   Referencia: carpeta "Ui Kit GCD Argentina". */
+/* ===== Tokens Coltrane (8. Tokens - CSS) ===== */
+:root {
+    --color-interactive-primary: #1C42E8;
+    --color-interactive-primary-hover: #081754;
+    --color-interactive-primary-press: #05297A;
+    --color-interactive-secondary: #F3F3F3;
+    --color-interactive-secondary-hover: #C9C9C9;
+    --color-interactive-secondary-press: #DEDEDE;
+    --color-interactive-error: #FF594D;
+    --color-interactive-error-hover: #7A2627;
+    --color-interactive-error-press: #C8180D;
+
+    --color-text: #081754;
+    --color-text-soft: #4A4A4A;
+    --color-text-inactive: #8C8C8C;
+    --color-text-invert: #FFFFFF;
+    --color-text-error: #C8180D;
+    --color-text-warning: #CF4600;
+    --color-text-success: #2E8A41;
+    --color-text-info: #0062A5;
+
+    --color-bg-0: #F3F3F3;
+    --color-bg-body: #FFFFFF;
+    --color-bg-inactive: #DEDEDE;
+    --color-border: #C9C9C9;
+    --color-brand-coppel: #F0D224;
+
+    --rounded-sm: 8px;
+    --rounded-md: 16px;
+    --rounded-full: 999px;
+
+    /* Profundidad: default / hover / float */
+    --shadow-default: 0 1px 4px rgba(8, 23, 84, 0.08);
+    --shadow-hover:   0 4px 12px rgba(8, 23, 84, 0.14);
+    --shadow-float:   0 12px 32px rgba(8, 23, 84, 0.20);
+}
+
+html, body { font-family: 'Poppins', sans-serif; color: var(--color-text); }
+
+/* ===== Iconos Coltrane (SVG como máscara para heredar color) ===== */
+.icon {
+    display: inline-block; width: 24px; height: 24px; flex-shrink: 0;
+    background-color: currentColor;
+    -webkit-mask: var(--src) center / contain no-repeat;
+            mask: var(--src) center / contain no-repeat;
+}
+.icon-sm { width: 20px; height: 20px; }
+.icon-xs { width: 16px; height: 16px; }
+
+/* ===== Button (semicircular, padding 12/24, Body 16) ===== */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 24px; border-radius: var(--rounded-full);
+    font-size: 16px; font-weight: 500; line-height: 24px;
+    transition: background-color .15s, color .15s, box-shadow .15s;
+    white-space: nowrap;
+}
+.btn:focus-visible { outline: 2px solid var(--color-interactive-primary); outline-offset: 2px; }
+.btn:disabled { background: var(--color-bg-inactive); color: var(--color-text-inactive); cursor: not-allowed; box-shadow: none; }
+
+.btn-primary { background: var(--color-interactive-primary); color: var(--color-text-invert); }
+.btn-primary:not(:disabled):hover  { background: var(--color-interactive-primary-hover); }
+.btn-primary:not(:disabled):active { background: var(--color-interactive-primary-press); }
+
+.btn-secondary { background: var(--color-interactive-secondary); color: var(--color-text); }
+.btn-secondary:not(:disabled):hover  { background: var(--color-interactive-secondary-hover); }
+.btn-secondary:not(:disabled):active { background: var(--color-interactive-secondary-press); }
+
+.btn-tertiary { background: transparent; color: var(--color-interactive-primary); padding-left: 12px; padding-right: 12px; }
+.btn-tertiary:not(:disabled):hover { color: var(--color-interactive-primary-hover); text-decoration: underline; }
+.btn-tertiary:disabled { background: transparent; }
+
+.btn-error { background: var(--color-interactive-error); color: var(--color-text-invert); }
+.btn-error:not(:disabled):hover  { background: var(--color-interactive-error-hover); }
+.btn-error:not(:disabled):active { background: var(--color-interactive-error-press); }
+
+.btn-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: var(--rounded-full); color: var(--color-text);
+    transition: background-color .15s;
+}
+.btn-icon:hover { background: var(--color-interactive-secondary); }
+
+/* ===== Input (rounded-sm) ===== */
+.input {
+    width: 100%; height: 48px; padding: 0 16px;
+    border: 1px solid var(--color-border); border-radius: var(--rounded-sm);
+    font-size: 16px; color: var(--color-text); background: var(--color-bg-body);
+    outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.input::placeholder { color: var(--color-text-inactive); }
+.input:focus { border-color: var(--color-interactive-primary); box-shadow: 0 0 0 3px rgba(28, 66, 232, .15); }
+
+/* ===== Card (rounded-md) ===== */
+.card { background: var(--color-bg-body); border-radius: var(--rounded-md); box-shadow: var(--shadow-default); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { width: 18px; height: 18px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }

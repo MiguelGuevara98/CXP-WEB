@@ -1,0 +1,54 @@
+/* Estructura de la app: menú lateral, tabla, badges, paginación, modal. */
+.sidebar { transition: width .25s ease; }
+/* Menú cerrado: barra angosta solo con íconos; el nombre aparece al pasar el mouse */
+.sidebar-mini { width: 80px !important; }
+.sidebar-mini .nav-item { justify-content: center; padding: 12px; gap: 0; }
+.sidebar-mini .nav-texto { display: none; }
+.nav-item { position: relative; }
+.sidebar-mini .nav-item::after {
+    content: attr(data-tip); position: absolute; left: calc(100% + 12px); top: 50%;
+    transform: translate(-4px, -50%); white-space: nowrap; pointer-events: none;
+    background: var(--color-text); color: #fff; font-size: 12px; font-weight: 500;
+    padding: 6px 10px; border-radius: 8px; box-shadow: var(--shadow-hover);
+    opacity: 0; transition: opacity .12s, transform .12s; z-index: 50; }
+.sidebar-mini .nav-item::before {
+    content: ''; position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+    border: 6px solid transparent; border-right-color: var(--color-text); border-left: 0;
+    opacity: 0; transition: opacity .12s; pointer-events: none; z-index: 50; }
+.sidebar-mini .nav-item:hover::after, .sidebar-mini .nav-item:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+.sidebar-mini .nav-item:hover::before, .sidebar-mini .nav-item:focus-visible::before { opacity: 1; }
+
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: var(--rounded-sm);
+            font-size: 14px; font-weight: 500; color: var(--color-text); transition: background-color .15s; }
+.nav-item:hover { background: var(--color-interactive-secondary); }
+.nav-item.activo { background: var(--color-interactive-primary); color: var(--color-text-invert); box-shadow: var(--shadow-hover); }
+
+/* Table */
+.tabla th { font-size: 14px; font-weight: 600; color: var(--color-text); text-align: left; padding: 12px 16px;
+            border-bottom: 1px solid var(--color-border); background: var(--color-bg-body); position: sticky; top: 0; z-index: 1; }
+.tabla td { font-size: 14px; color: var(--color-text); padding: 14px 16px; border-bottom: 1px solid var(--color-bg-0); }
+.tabla tbody tr:hover td { background: #F8F9FE; }
+.tabla .num { text-align: right; }
+
+/* Badge de estatus (píldora) */
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: var(--rounded-full);
+         font-size: 12px; font-weight: 500; white-space: nowrap; }
+.badge-success { background: #E6F6EC; color: var(--color-text-success); }
+.badge-warning { background: #FFF1E3; color: var(--color-text-warning); }
+.badge-error   { background: #FFECEA; color: var(--color-text-error); }
+.badge-info    { background: #E6F2FB; color: var(--color-text-info); }
+.badge-neutral { background: var(--color-bg-0); color: var(--color-text-soft); }
+
+/* Pagination */
+.pag-btn { min-width: 32px; height: 32px; padding: 0 6px; border-radius: var(--rounded-full); font-size: 14px; font-weight: 500;
+           display: inline-flex; align-items: center; justify-content: center; color: var(--color-text); transition: background-color .15s; }
+.pag-btn:hover:not(:disabled) { background: var(--color-interactive-secondary); }
+.pag-btn.activo { background: var(--color-interactive-primary); color: var(--color-text-invert); }
+.pag-btn:disabled { color: var(--color-text-inactive); cursor: not-allowed; }
+
+/* Progress */
+.barra { transition: width .5s ease-out, background-color .2s; }
+
+/* Modal */
+.modal-panel { animation: modalIn .18s ease-out; }
+@keyframes modalIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }

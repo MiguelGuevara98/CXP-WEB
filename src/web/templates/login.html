@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Iniciar sesión · Cuentas por Pagar</title>
+    {% include "_head.html" %}
+
+</head>
+<body class="bg-white min-h-screen grid lg:grid-cols-2">
+
+    <section class="flex items-center justify-center px-6 py-12">
+        <div class="w-full max-w-sm">
+            <img src="{{ url_for('static', filename='img/coppel-blue.svg') }}" alt="Coppel" class="h-14 -ml-4">
+
+            <h1 class="mt-8 text-[28px] leading-9 font-semibold text-ink">Cuentas por Pagar</h1>
+            <p class="mt-2 text-sm text-ink-soft">Inicia sesión con tu usuario de Oracle</p>
+
+            {% if error %}
+            <div class="mt-6 flex items-start gap-3 rounded-sm px-4 py-3 text-sm" style="background:#FFECEA; color: var(--color-text-error);" role="alert">
+                <span class="icon icon-sm mt-0.5" style="--src: url('{{ url_for('static', filename='icons/cancel.svg') }}')"></span>
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            {% if not ambientes %}
+            <div class="mt-6 rounded-sm px-4 py-3 text-sm" style="background:#FFF1E3; color: var(--color-text-warning);" role="alert">
+                No hay ambientes de Oracle configurados. Define ORACLE_URL_DEV u ORACLE_URL_PROD.
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login" class="mt-8 space-y-5" onsubmit="enviando()">
+                <div>
+                    <label for="ambiente" class="block text-sm font-medium text-ink mb-2">Ambiente de Oracle</label>
+                    <div class="relative">
+                        <select id="ambiente" name="ambiente" required class="input appearance-none pr-12 cursor-pointer">
+                            {% for a in ambientes %}
+                            <option value="{{ a }}" {% if a == ambiente_sel %}selected{% endif %}>{{ a }}{% if a == 'PROD' %} (producción){% else %} (desarrollo){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="icon icon-xs absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-ink"
+                              style="--src: url('{{ url_for('static', filename='icons/chevron-down.svg') }}')"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="username" class="block text-sm font-medium text-ink mb-2">Usuario</label>
+                    <input type="text" id="username" name="username" required autocomplete="username"
+                           value="{{ usuario }}" placeholder="Ingresa tu usuario de Oracle" class="input">
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-ink mb-2">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                               placeholder="Ingresa tu contraseña" class="input pr-12">
+                        <button type="button" onclick="togglePassword()" title="Mostrar contraseña"
+                                class="absolute inset-y-0 right-1 my-auto btn-icon text-ink-soft">
+                            <span id="iconoPassword" class="icon icon-sm"
+                                  style="--src: url('{{ url_for('static', filename='icons/visibility.svg') }}')"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="btnEntrar" class="btn btn-primary w-full !mt-8" {% if not ambientes %}disabled{% endif %}>Iniciar sesión</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Panel de marca: círculos amarillos Coppel sobre azul primario -->
+    <aside class="hidden lg:block relative overflow-hidden bg-primary">
+        <div class="absolute rounded-full bg-coppel" style="width: 38%; aspect-ratio: 1; left: 18%; top: 50%; transform: translateY(-50%);"></div>
+        <div class="absolute rounded-full bg-coppel" style="width: 17%; aspect-ratio: 1; left: 60%; top: 50%; transform: translateY(-50%);"></div>
+        <div class="absolute rounded-full bg-coppel" style="width: 17%; aspect-ratio: 1; left: 80%; top: 50%; transform: translateY(-50%);"></div>
+    </aside>
+
+    <script>
+        const ICON_VER = "url('{{ url_for('static', filename='icons/visibility.svg') }}')";
+        const ICON_OCULTAR = "url('{{ url_for('static', filename='icons/visibility-off.svg') }}')";
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icono = document.getElementById('iconoPassword');
+            const mostrar = input.type === 'password';
+            input.type = mostrar ? 'text' : 'password';
+            icono.style.setProperty('--src', mostrar ? ICON_OCULTAR : ICON_VER);
+        }
+        function enviando() {
+            const b = document.getElementById('btnEntrar');
+            b.disabled = true;
+            b.innerHTML = '<span class="spinner"></span> Validando con Oracle...';
+        }
+    </script>
+</body>
+</html>

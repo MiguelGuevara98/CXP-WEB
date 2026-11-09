@@ -1,0 +1,25 @@
+{# <head> común: tipografía, Tailwind (CDN) y sistema de diseño Coltrane #}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: { sans: ['Poppins', 'sans-serif'] },
+                colors: {
+                    primary:   { DEFAULT: '#1C42E8', hover: '#081754', press: '#05297A' },
+                    ink:       { DEFAULT: '#081754', soft: '#4A4A4A', inactive: '#8C8C8C' },
+                    line:      '#C9C9C9',
+                    bg0:       '#F3F3F3',
+                    coppel:    '#F0D224',
+                },
+                borderRadius: { sm: '8px', md: '16px' },
+            }
+        }
+    }
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/coltrane.css') }}">

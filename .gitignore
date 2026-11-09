@@ -4,8 +4,12 @@ env/
 venv/
 .env
 
-# Referencia de diseño (UI Kit Coltrane, no se versiona)
+# Por si vuelven a copiarse aquí: referencia de diseño (57 MB) y datos reales; nunca se versionan
 Ui Kit GCD Argentina/
+xml_muestra/
 
-# Instalador generado (scripts/generar_instalador.py)
-dist/
+# Evidencias de cargas a Oracle (zip enviado + resultado.json)
+cargas/
+
+# Clave local que firma la sesión (se genera sola; no se versiona)
+.secret_key

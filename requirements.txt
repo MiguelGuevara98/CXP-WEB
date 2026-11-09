@@ -1,2 +1,12 @@
 Flask
-gunicorn
+pandas
+requests
+cryptography
+openpyxl
+xlrd
+lxml
+beautifulsoup4
+html5lib
+defusedxml
+google-cloud-bigquery
+google-cloud-storage
