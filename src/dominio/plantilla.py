@@ -17,7 +17,6 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from src.dominio import catalogos as cat
-from src.dominio.cfdi import descripcion_con_cantidad
 from src.dominio.captura import (COLUMNAS_MANUALES, OBLIGATORIAS, COL_TIPO, COL_FORMA_PAGO,
                                      COL_SUBIR_A, COL_ACTIVO, COL_INCLUIR)
 
@@ -25,10 +24,11 @@ HOJA = "Facturas"
 COLUMNAS_XML = [
     ("UUID", 38), ("Archivo", 28), ("RFC emisor", 15), ("Emisor", 32), ("Serie", 12), ("Folio", 12),
     ("Fecha emisión", 13), ("Fecha timbrado", 13), ("Método pago", 10), ("Forma pago", 18), ("Moneda", 8),
-    ("Subtotal", 12), ("IVA", 10), ("Total", 12), ("Conceptos", 10), ("Primer concepto", 45),
+    ("Subtotal", 12), ("IVA", 10), ("Total", 12), ("Conceptos", 10), ("Primer concepto", 45), ("Cantidad", 10),
     ("Advertencias", 50),
 ]
 COLUMNAS_IMPORTE = {"Subtotal", "IVA", "Total"}
+COLUMNAS_CANTIDAD = {"Cantidad"}
 COLUMNAS_TEXTO = {"UUID", "Serie", "Folio", "Forma pago"}
 ANCHOS_MANUALES = {"Incluir": 9, "# Colaborador": 14, "Número de proveedor": 14, "Descripción": 55, "Tipo de factura": 16,
                    "Forma de pago": 20, "Subir factura a": 20, "Activo fijo": 16, "Anticipo": 40,
@@ -80,7 +80,8 @@ def crear_plantilla(cfdis, lote_id, advertencias=None):
                 c["Fecha"][:10], (c["FechaTimbrado"] or "")[:10], c["MetodoPago"],
                 f"{fp} {cat.FORMAS_PAGO_SAT.get(fp, '')}".strip(), c["Moneda"],
                 _fmt(c["SubTotal"]), _fmt(iva), _fmt(c["Total"]), len(c["Conceptos"]),
-                (descripcion_con_cantidad(c["Conceptos"][0]) if c["Conceptos"] else ""),
+                (c["Conceptos"][0]["Descripcion"] if c["Conceptos"] else ""),
+                (_fmt(c["Conceptos"][0]["Cantidad"]) if c["Conceptos"] else ""),
                 " · ".join(advertencias.get(c["UUID"], []))]
         fila += [cat.DEFAULTS.get(col, "") for col in COLUMNAS_MANUALES]
         ws.append(fila)
@@ -99,6 +100,8 @@ def crear_plantilla(cfdis, lote_id, advertencias=None):
             nombre_col = COLUMNAS_XML[celda.column - 1][0] if celda.column <= n_xml else ""
             if nombre_col in COLUMNAS_IMPORTE:
                 celda.number_format = "#,##0.00"
+            if nombre_col in COLUMNAS_CANTIDAD:
+                celda.number_format = "General"
             if nombre_col in COLUMNAS_TEXTO or celda.column > n_xml:
                 celda.number_format = "@"  # texto: conserva ceros y guiones
             if nombre_col == "Advertencias" and celda.value:

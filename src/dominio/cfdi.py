@@ -47,23 +47,6 @@ def limpiar_descripcion(texto):
     return " ".join(_HASH.sub(" ", texto or "").split())
 
 
-def _cantidad_txt(v):
-    """Decimal -> texto sin ceros de sobra: 16.0000 -> '16', 1.5000 -> '1.5'."""
-    if v is None:
-        return ""
-    t = format(v.normalize(), "f")
-    return t.rstrip("0").rstrip(".") if "." in t else t
-
-
-def descripcion_con_cantidad(con):
-    """'DESINSECTACION DE CHASIS | CANT 16 SERVICIO' (sin hash; cantidad y unidad del XML)."""
-    cant = _cantidad_txt(con.get("Cantidad"))
-    if not cant:
-        return con["Descripcion"]
-    unidad = con.get("Unidad") or con.get("ClaveUnidad") or ""
-    return f"{con['Descripcion']} | CANT {cant} {unidad}".strip()
-
-
 def _hijos(elem, nombre):
     return [e for e in elem if _local(e.tag) == nombre]
 

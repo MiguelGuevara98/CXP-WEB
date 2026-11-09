@@ -6,7 +6,7 @@ Reglas confirmadas contra 95 facturas reales en PROD:
 - InvoiceAmount = Total; monedas = Moneda; InvoiceDate/TermsDate = Fecha (solo fecha)
 - Description = "F-<UUID> <Folio|0> <Serie> | Empleado <capturista> | <descripción del ticket>"
 - Una línea Item por Concepto: importe redondeado a 2 decimales; descripción sin hashes del emisor,
-  con cantidad y unidad ("<descripción> | CANT <cantidad> <unidad>"), recortada a 235
+  recortada a 235
 - Línea Tax con TotalImpuestosTrasladados (IVA 16%)
 - Sitio del proveedor = prefijo ("X") + número de colaborador
 - Anticipo aplicado por el total de la factura
@@ -16,7 +16,6 @@ El resultado usa los nombres de campo del API REST de Oracle (/invoices).
 from decimal import Decimal, ROUND_HALF_UP
 
 from src.dominio import catalogos as cat
-from src.dominio.cfdi import descripcion_con_cantidad
 from src.dominio.captura import (COL_ACTIVO, COL_ANTICIPO, COL_COLABORADOR, COL_CUENTA, COL_DESCRIPCION,
                                      COL_FORMA_PAGO, COL_PROVEEDOR, COL_SUBIR_A, COL_TIPO, prefijo)
 
@@ -56,7 +55,7 @@ def generar_factura(c, m, capturista):
             "LineNumber": len(lineas) + 1,
             "LineType": "Item",
             "LineAmount": _num(con["Importe"]),
-            "Description": descripcion_con_cantidad(con)[:cat.LARGO_DESCRIPCION_LINEA].rstrip(),
+            "Description": con["Descripcion"][:cat.LARGO_DESCRIPCION_LINEA].rstrip(),
             "DistributionCombination": s(COL_CUENTA),
             "TrackAsAssetFlag": cat.ACTIVO_FIJO[s(COL_ACTIVO)],
         })
