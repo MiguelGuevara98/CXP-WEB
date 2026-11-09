@@ -16,6 +16,15 @@ navegador y se suben a Cloud Shell con el menú **⋮ → Upload**.
 - La plantilla de Excel (hoja **Facturas**) tiene la columna **Cantidad** junto a **Primer concepto**.
 - La hoja **Conceptos** tiene la columna **Unidad**.
 - A Oracle se envía la descripción limpia.
+- Las carpetas de Cloud Storage tienen nombres que dicen qué contienen y en qué paso se generan:
+
+  | Antes | Ahora | Qué contiene |
+  |---|---|---|
+  | `original/` | `1_xml_recibidos/` | Los XML, zip o carpeta que sube el usuario (o que se traen de Drive), tal cual llegaron. |
+  | `plantillas/` | `2_plantillas_capturadas/` | Cada versión del Excel ya llenado que sube el colaborador (`plantilla_v1_...`, `plantilla_v2_...`). |
+  | `fbdi/` | `3_envios_oracle/` | El zip FBDI enviado a Oracle y `resultado.json` con la respuesta. |
+
+  Lo que ya estaba guardado con los nombres anteriores se queda donde está; los lotes nuevos usan los nombres nuevos.
 
 ## Paso 1. Descargar los scripts en la PC
 
