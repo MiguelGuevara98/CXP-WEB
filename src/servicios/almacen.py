@@ -1,8 +1,11 @@
 """
 Cloud Storage del proyecto (gs://CXP_GCS_BUCKET/CXP_GCS_PREFIJO/):
-- original/AAAA/MM/DD/<lote>/<archivo>: los archivos que sube el usuario (XML, zip o carpeta), en segundo plano.
-- plantillas/AAAA/MM/DD/<lote>/plantilla_vN_HHMMSS.xlsx: cada plantilla llena que sube el colaborador.
-- fbdi/AAAA/MM/DD/<lote>/: el zip FBDI enviado a Oracle y resultado.json de cada carga.
+- 1_xml_recibidos/AAAA/MM/DD/<lote>/<archivo>: los XML, zip o carpeta que sube el usuario (o que se traen de Drive),
+  tal cual llegaron. Se suben en segundo plano.
+- 2_plantillas_capturadas/AAAA/MM/DD/<lote>/plantilla_vN_HHMMSS.xlsx: cada versión de la plantilla de Excel ya
+  llena que sube el colaborador (la plantilla vacía que se descarga no se guarda).
+- 3_envios_oracle/AAAA/MM/DD/<lote>/: el zip FBDI enviado a Oracle y resultado.json con la respuesta de cada carga.
+El número indica el orden del proceso; con el id del lote se sigue una factura por las tres carpetas.
 Si CXP_GCS_BUCKET no está definida no se respalda nada.
 Si falla, el proceso sigue y el error queda en el log.
 """
@@ -22,6 +25,11 @@ log = logging.getLogger(__name__)
 
 BUCKET = (os.environ.get("CXP_GCS_BUCKET") or "").strip()
 PREFIJO = (os.environ.get("CXP_GCS_PREFIJO") or "cxp_facturas").strip().strip("/")
+
+# Carpetas dentro del prefijo (el número indica el paso del proceso)
+CARPETA_XML = "1_xml_recibidos"
+CARPETA_PLANTILLAS = "2_plantillas_capturadas"
+CARPETA_ORACLE = "3_envios_oracle"
 
 _cliente = None
 
@@ -56,7 +64,7 @@ def guardar_evidencia(lote_id, carpeta_local):
     local = Path(carpeta_local)
     if not BUCKET or not local.is_dir():
         return {}
-    ruta = _carpeta_dia("fbdi", lote_id)
+    ruta = _carpeta_dia(CARPETA_ORACLE, lote_id)
     try:
         bucket = _gcs().bucket(BUCKET)
         subidos = {}
@@ -85,7 +93,7 @@ def planear_plantilla(lote_id, numero, nombre, contenido):
     if not BUCKET:
         return None
     hora = datetime.now(ZoneInfo(ZONA_HORARIA))
-    entrada = _entrada(f"{_carpeta_dia('plantillas', lote_id)}plantilla_v{numero}_{hora:%H%M%S}.xlsx", nombre, contenido)
+    entrada = _entrada(f"{_carpeta_dia(CARPETA_PLANTILLAS, lote_id)}plantilla_v{numero}_{hora:%H%M%S}.xlsx", nombre, contenido)
     entrada["tipo"] = "plantilla"
     return entrada
 
@@ -98,7 +106,7 @@ def planear(lote_id, archivos):
     """
     if not BUCKET:
         return None, []
-    ruta = _carpeta_dia("original", lote_id)
+    ruta = _carpeta_dia(CARPETA_XML, lote_id)
     usados, plan = set(), []
     for nombre, contenido in archivos:
         n = base = _nombre_seguro(nombre)
