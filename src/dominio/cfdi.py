@@ -5,6 +5,7 @@ leer_archivos(lista de (nombre, bytes))  -> lista de dicts con el CFDI estructur
 Acepta .xml sueltos y .zip (con XML dentro, en cualquier carpeta). Ignora PDF y otros.
 """
 import io
+import re
 import zipfile
 from xml.etree.ElementTree import ParseError
 
@@ -34,6 +35,33 @@ def _dec(v):
         return Decimal(str(v).strip())
     except InvalidOperation:
         return None
+
+
+# Códigos de control que algunos emisores pegan a la descripción (hashes hexadecimales de 32+ caracteres).
+# Se exige al menos una letra a-f y un dígito para no borrar números largos legítimos.
+_HASH = re.compile(r"\b(?=[0-9a-fA-F]*[a-fA-F])(?=[0-9a-fA-F]*\d)[0-9a-fA-F]{32,}\b")
+
+
+def limpiar_descripcion(texto):
+    """Quita hashes hexadecimales y espacios de más de la descripción del concepto."""
+    return " ".join(_HASH.sub(" ", texto or "").split())
+
+
+def _cantidad_txt(v):
+    """Decimal -> texto sin ceros de sobra: 16.0000 -> '16', 1.5000 -> '1.5'."""
+    if v is None:
+        return ""
+    t = format(v.normalize(), "f")
+    return t.rstrip("0").rstrip(".") if "." in t else t
+
+
+def descripcion_con_cantidad(con):
+    """'DESINSECTACION DE CHASIS | CANT 16 SERVICIO' (sin hash; cantidad y unidad del XML)."""
+    cant = _cantidad_txt(con.get("Cantidad"))
+    if not cant:
+        return con["Descripcion"]
+    unidad = con.get("Unidad") or con.get("ClaveUnidad") or ""
+    return f"{con['Descripcion']} | CANT {cant} {unidad}".strip()
 
 
 def _hijos(elem, nombre):
@@ -71,8 +99,11 @@ def parsear_cfdi(contenido: bytes, nombre_archivo: str = ""):
         conceptos.append({
             "n": i,
             "ClaveProdServ": c.get("ClaveProdServ", ""),
-            "Descripcion": c.get("Descripcion", ""),
+            "Descripcion": limpiar_descripcion(c.get("Descripcion", "")),
+            "DescripcionXml": c.get("Descripcion", ""),
             "Cantidad": _dec(c.get("Cantidad")),
+            "Unidad": (c.get("Unidad") or "").strip(),
+            "ClaveUnidad": (c.get("ClaveUnidad") or "").strip(),
             "ValorUnitario": _dec(c.get("ValorUnitario")),
             "Importe": _dec(c.get("Importe")),
             "Descuento": _dec(c.get("Descuento")),

@@ -17,6 +17,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from src.dominio import catalogos as cat
+from src.dominio.cfdi import descripcion_con_cantidad
 from src.dominio.captura import (COLUMNAS_MANUALES, OBLIGATORIAS, COL_TIPO, COL_FORMA_PAGO,
                                      COL_SUBIR_A, COL_ACTIVO, COL_INCLUIR)
 
@@ -79,7 +80,7 @@ def crear_plantilla(cfdis, lote_id, advertencias=None):
                 c["Fecha"][:10], (c["FechaTimbrado"] or "")[:10], c["MetodoPago"],
                 f"{fp} {cat.FORMAS_PAGO_SAT.get(fp, '')}".strip(), c["Moneda"],
                 _fmt(c["SubTotal"]), _fmt(iva), _fmt(c["Total"]), len(c["Conceptos"]),
-                (c["Conceptos"][0]["Descripcion"][:120] if c["Conceptos"] else ""),
+                (descripcion_con_cantidad(c["Conceptos"][0]) if c["Conceptos"] else ""),
                 " · ".join(advertencias.get(c["UUID"], []))]
         fila += [cat.DEFAULTS.get(col, "") for col in COLUMNAS_MANUALES]
         ws.append(fila)
@@ -129,13 +130,14 @@ def crear_plantilla(cfdis, lote_id, advertencias=None):
 
     # Conceptos (consulta)
     wc = wb.create_sheet("Conceptos")
-    wc.append(["UUID", "No.", "ClaveProdServ", "Descripción", "Cantidad", "Valor unitario", "Importe", "IVA"])
+    wc.append(["UUID", "No.", "ClaveProdServ", "Descripción", "Cantidad", "Unidad", "Valor unitario", "Importe", "IVA"])
     for c in validos:
         for con in c["Conceptos"]:
             iva = sum((t["Importe"] or 0) for t in con["Traslados"])
             wc.append([c["UUID"], con["n"], con["ClaveProdServ"], con["Descripcion"],
-                       _fmt(con["Cantidad"]), _fmt(con["ValorUnitario"]), _fmt(con["Importe"]), float(iva)])
-    for i, w in enumerate([38, 6, 14, 70, 10, 14, 12, 10], 1):
+                       _fmt(con["Cantidad"]), con["Unidad"] or con["ClaveUnidad"],
+                       _fmt(con["ValorUnitario"]), _fmt(con["Importe"]), float(iva)])
+    for i, w in enumerate([38, 6, 14, 70, 10, 12, 14, 12, 10], 1):
         wc.column_dimensions[get_column_letter(i)].width = w
     for celda in wc[1]:
         celda.font = Font(bold=True, color="FFFFFF")
