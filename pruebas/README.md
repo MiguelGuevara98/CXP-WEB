@@ -8,6 +8,7 @@ navegador y se suben a Cloud Shell con el menú **⋮ → Upload**.
 |---|---|
 | `actualizar_cxp_web.sh` | Actualiza el proyecto en Cloud Shell a la versión de esta rama. Trae todo el código adentro, no descarga nada. |
 | `verificar_actualizacion.sh` | Revisa si el proyecto ya tiene esta versión y si la app necesita reiniciarse. No modifica nada. |
+| `probar_sitio_oracle.sh` | Busca en Oracle el sitio de un colaborador o proveedor, igual que la app, y muestra el número de proveedor que encuentra. Solo lectura. |
 | `probar_lectura_xml.sh` | Lee uno o varios XML/zip y muestra descripción, cantidad y unidad de cada concepto. Genera una plantilla de Excel de prueba. No se conecta a Oracle ni a Google. |
 
 ## Qué incluye esta versión
@@ -26,6 +27,20 @@ navegador y se suben a Cloud Shell con el menú **⋮ → Upload**.
   | `fbdi/` | `3_envios_oracle/` | El zip FBDI enviado a Oracle y `resultado.json` con la respuesta. |
 
   Lo que ya estaba guardado con los nombres anteriores se queda donde está; los lotes nuevos usan los nombres nuevos.
+- **Columna `# Colaborador`: a quién se carga la factura.** La app busca el sitio en Oracle y de ahí toma
+  el número de proveedor:
+
+  | Se captura | Ejemplo | Sitio que se busca en Oracle |
+  |---|---|---|
+  | Número de colaborador (sin la X) | `90324086` | `X90324086` |
+  | RFC del proveedor (sin GT) | `CES911213AU1` | `GTCES911213AU1` |
+
+  - La app distingue sola si es colaborador (solo números) o proveedor (RFC). Si escriben el prefijo por
+    error (`X90324086` o `GTCES911213AU1`) también lo acepta.
+  - La columna **Número de proveedor** ya no está en la plantilla: se llena con el proveedor dueño del sitio.
+  - Si el sitio no existe o está inactivo en Oracle, la factura sale **con error** y no se carga;
+    las demás del lote sí.
+  - En la pantalla, cada factura lista para Oracle muestra el sitio y el proveedor encontrado.
 
 ## Paso 1. Descargar los scripts en la PC
 
@@ -34,6 +49,7 @@ En el navegador, abre cada archivo de esta carpeta en GitHub y usa el botón de 
 
 - `pruebas/actualizar_cxp_web.sh`
 - `pruebas/verificar_actualizacion.sh`
+- `pruebas/probar_sitio_oracle.sh`
 - `pruebas/probar_lectura_xml.sh`
 
 Si ya habías descargado una versión anterior, **bórrala primero de Descargas**. Si Windows guarda el
@@ -118,6 +134,26 @@ Para revisar la plantilla de prueba en Excel:
 cloudshell download ~/plantilla_prueba.xlsx
 ```
 
+## Paso 5b. Probar la búsqueda de sitios en Oracle
+
+Con números de colaborador o RFC reales (pide usuario y contraseña de Oracle; no se guardan):
+
+```bash
+cd ~ && bash probar_sitio_oracle.sh DEV 90324086 CES911213AU1
+```
+
+Salida esperada:
+
+```
+Ambiente DEV
+  90324086         sitio X90324086          proveedor 12345 NOMBRE DEL COLABORADOR  (encontrado por: ...)
+  CES911213AU1     sitio GTCES911213AU1     proveedor 67890 NOMBRE DEL PROVEEDOR    (encontrado por: proveedor por RFC)
+```
+
+`encontrado por` indica cómo se encontró: `proveedor por RFC`, `proveedor por sitio` o `factura anterior`
+(un colaborador que ya tuvo facturas con ese sitio). Si sale `NO ENCONTRADO` para un sitio que sí existe,
+o `ERROR: HTTP 403`, avisa: puede faltar el permiso de consulta de proveedores (View Supplier Site) al usuario.
+
 ## Paso 6. Reiniciar la app
 
 Si la app está corriendo, detenla con **Ctrl+C** y vuelve a iniciarla:
@@ -152,6 +188,8 @@ reciben archivos nuevos.
 | Marca `[REINICIAR]` | La app arrancó antes de actualizar | Ctrl+C en la terminal de la app y paso 6 |
 | Todo `[OK]` pero no aparecen las carpetas nuevas | Aún no se procesa un lote nuevo | Subir XML desde la app y revisar el bucket |
 | La plantilla no trae la columna Cantidad | Es una plantilla generada antes de reiniciar | Generar una plantilla nueva |
+| "El sitio X... no existe o está inactivo" | El colaborador o proveedor no tiene ese sitio activo en Oracle, o el número/RFC está mal | Revisar con `probar_sitio_oracle.sh` y, si falta, darlo de alta en Oracle |
+| "No se pudo buscar el sitio ... (HTTP 401/403)" | El usuario de Oracle no tiene permiso de consultar proveedores | Pedir el permiso de consulta de proveedores y sitios |
 
 ## Seguridad
 

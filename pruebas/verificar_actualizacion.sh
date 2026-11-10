@@ -29,6 +29,9 @@ grep -q '("Cantidad", 10)' "$PROYECTO/src/dominio/plantilla.py" 2>/dev/null \
 grep -q '"1_xml_recibidos"' "$PROYECTO/src/servicios/almacen.py" 2>/dev/null \
   && bien "Carpetas de Storage: 1_xml_recibidos, 2_plantillas_capturadas, 3_envios_oracle" \
   || mal "Carpetas de Storage: 1_xml_recibidos, 2_plantillas_capturadas, 3_envios_oracle"
+grep -q "def sitio_oracle" "$PROYECTO/src/dominio/captura.py" 2>/dev/null && [ -f "$PROYECTO/src/oracle/proveedores.py" ] \
+  && bien "Sitio en Oracle desde '# Colaborador' (X + colaborador o GT + RFC)" \
+  || mal "Sitio en Oracle desde '# Colaborador' (X + colaborador o GT + RFC)"
 echo
 
 echo "App:"
