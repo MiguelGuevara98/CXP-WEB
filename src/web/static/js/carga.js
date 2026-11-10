@@ -56,9 +56,42 @@ function celdaDetalle(f) {
     };
     errores.forEach(m => linea(m, 'det-error', ICONOS.error));
     (f.advertencias || []).forEach(a => linea(a, 'det-aviso', ICONOS.alerta));
-    if (f.descripcion) linea(`${f.lineas} línea(s) · sitio ${f.sitio || f.colaborador}` + (f.proveedor ? ` · proveedor ${f.proveedor}` : '') + (f.proveedor ? ` · RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}` : '') + (f.anticipo ? ` · anticipo ${f.anticipo}` : ''), 'det-info');
+    if (f.descripcion) {
+        if (f.proveedor_numero) caja.appendChild(tarjetaAsignado(f));
+        const extra = [`${f.lineas} ${f.lineas === 1 ? 'línea' : 'líneas'}`];
+        if (!f.proveedor_numero) extra.push(`colaborador ${f.colaborador}`);
+        if (f.anticipo) extra.push(`anticipo ${f.anticipo}`);
+        linea(extra.join(' · '), 'det-info');
+    }
     if (!caja.childNodes.length) linea('-', 'det-info');
     return td;
+}
+
+// A quién se carga la factura: tipo + sitio, nombre del proveedor en Oracle, número y RFC
+function tarjetaAsignado(f) {
+    const el = (tag, clase, texto) => {
+        const n = document.createElement(tag);
+        if (clase) n.className = clase;
+        if (texto !== undefined) n.textContent = texto;
+        return n;
+    };
+    const card = el('div', 'det-asignado');
+    const top = el('div', 'det-asig-top');
+    const tag = el('span', 'det-tag ' + (f.tipo_cargo === 'proveedor' ? 'det-tag-prov' : 'det-tag-colab'));
+    tag.append(icono(ICONOS.usuario), document.createTextNode(f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador'));
+    const sitio = el('span', 'det-sitio', f.sitio);
+    sitio.title = 'Sitio del proveedor en Oracle';
+    top.append(tag, sitio);
+    card.append(top, el('div', 'det-nombre', f.proveedor_nombre || '-'));
+    const datos = el('dl', 'det-datos');
+    [['No. proveedor', f.proveedor_numero], ['RFC', f.rfc_proveedor || 'Sin RFC en Oracle']].forEach(([k, v]) => {
+        const par = el('div');
+        const dd = el('dd', !f.rfc_proveedor && k === 'RFC' ? 'det-vacio' : '', v);
+        par.append(el('dt', '', k), dd);
+        datos.appendChild(par);
+    });
+    card.appendChild(datos);
+    return card;
 }
 
 function renderLote(filas, titulo) {

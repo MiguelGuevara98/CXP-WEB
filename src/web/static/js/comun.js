@@ -4,7 +4,7 @@ const AMBIENTE = CXP.ambiente;
 const ICONO = (nombre) => `url('${CXP.static}icons/${nombre}.svg')`;
 const ICONOS = {
     check: ICONO('check-mark'), alerta: ICONO('alert-warning'), error: ICONO('cancel'),
-    info: ICONO('info'), chevron: ICONO('chevron-down'),
+    info: ICONO('info'), chevron: ICONO('chevron-down'), usuario: ICONO('user-profile'),
 };
 const $ = (id) => document.getElementById(id);
 let accionPendiente = null;

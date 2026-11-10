@@ -251,6 +251,8 @@ def procesar_plantilla(lote_actual, contenido, capturista, credenciales, nombre=
         fila.update({"colaborador": m["# Colaborador"], "sitio": sitio,
                      "proveedor": f'{encontrado["SupplierNumber"]} {encontrado["Supplier"]}'.strip(),
                      "rfc_proveedor": encontrado.get("Rfc") or "",
+                     "tipo_cargo": a_quien(m)[0], "proveedor_numero": encontrado["SupplierNumber"],
+                     "proveedor_nombre": encontrado["Supplier"],
                      "descripcion": f["Description"],
                      "lineas": len(f["invoiceLines"]), "anticipo": m.get("Anticipo", "")})
         resultado.append(fila)
