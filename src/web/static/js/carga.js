@@ -73,7 +73,7 @@ function etiquetasAsignado(f) {
     const t = document.createElement('p');
     t.className = 'det-titulo det-titulo-ok';
     t.append(icono(ICONOS.check), document.createTextNode(
-        (f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador') + ' encontrado en Oracle'));
+        (f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador') + ' en Oracle'));
     const chips = document.createElement('div');
     chips.className = 'det-chips';
     [`RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}`, `Sitio ${f.sitio}`,
@@ -91,7 +91,7 @@ function renderLote(filas, titulo) {
     filas.forEach((f, i) => {
         const tr = document.createElement('tr');
         tr.appendChild(celda(i + 1, 'num text-ink-soft'));
-        const tdU = celda(f.uuid || f.archivo, 'font-medium whitespace-nowrap text-xs');
+        const tdU = celda(f.uuid || f.archivo, 'font-medium col-uuid');
         tdU.title = [f.emisor, f.rfc, f.archivo].filter(Boolean).join(' · ');
         tr.appendChild(tdU);
         tr.appendChild(celda(f.unidad_negocio, 'whitespace-nowrap'));
