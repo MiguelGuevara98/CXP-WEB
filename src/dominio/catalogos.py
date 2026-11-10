@@ -18,6 +18,8 @@ FORMA_PAGO = {
 SUBIR_FACTURA_A = {
     "Cuentas por Pagar X": "X",
 }
+# Prefijo del sitio cuando el cargo es a un proveedor: en '# Colaborador' se captura su RFC y el sitio es GT + RFC
+PREFIJO_SITIO_PROVEEDOR = "GT"
 ACTIVO_FIJO = {
     "Captura normal": False,   # TrackAsAssetFlag
 }

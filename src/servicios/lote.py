@@ -21,12 +21,13 @@ from pathlib import Path
 
 from src.config import CARPETA_EVIDENCIAS, ZONA_HORARIA, ahora
 from src.dominio import catalogos
-from src.dominio.captura import excluida, prefijo, validar_captura
+from src.dominio.captura import COL_PROVEEDOR, a_quien, excluida, prefijo, sitio_oracle, validar_captura
 from src.dominio.cfdi import MAX_ARCHIVOS, LimiteExcedido, leer_archivos
 from src.dominio.factura import generar_factura
 from src.dominio.plantilla import crear_plantilla, leer_plantilla
 from src.dominio.validaciones import advertencias_cfdi, validar_cfdi
 from src.oracle.facturas import buscar_existentes
+from src.oracle.proveedores import buscar_sitios
 from src.servicios import ErrorServicio, almacen, drive, historial
 
 ESTADO_LISTA = "Lista para capturar"
@@ -177,11 +178,13 @@ def plantilla_del_lote(lote):
     return crear_plantilla(list(lote["cfdis"].values()), lote["id"], lote.get("advertencias"))
 
 
-def procesar_plantilla(lote_actual, contenido, capturista, nombre="plantilla.xlsx"):
+def procesar_plantilla(lote_actual, contenido, capturista, credenciales, nombre="plantilla.xlsx"):
     """
     Lee la plantilla llena y (re)genera las facturas de SU lote: se puede subir las veces que haga falta,
     también después de una carga o de recargar la página / reiniciar el servidor.
     Cada plantilla subida se guarda en Cloud Storage y queda como una versión nueva en control_ejecuciones.
+    El sitio de cada fila (X + colaborador o GT + RFC) se busca en Oracle; de ahí sale el número de proveedor.
+    Si el sitio no existe, la factura queda con error y no se carga.
     Devuelve (lote, respuesta_para_la_pantalla); quien llama deja ese lote como el activo de la sesión.
     """
     inicio = datetime.now(timezone.utc).isoformat()
@@ -203,6 +206,16 @@ def procesar_plantilla(lote_actual, contenido, capturista, nombre="plantilla.xls
             raise ErrorServicio(f'No se encontró el lote {lote_plantilla or "(desconocido)"} de esta plantilla. '
                                 f'Sube los XML y descarga una plantilla nueva.')
 
+    # Sitios a buscar en Oracle (una sola consulta por sitio, aunque se repita en varias filas)
+    consultas = {}
+    for uuid in lote["cfdis"]:
+        m = capturas.get(uuid)
+        if m is not None and not excluida(m) and not validar_captura(m):
+            tipo, valor = a_quien(m)
+            consultas[sitio_oracle(m)] = valor if tipo == "proveedor" else None
+    ambiente_oracle, usuario, password = credenciales
+    sitios = buscar_sitios(ambiente_oracle, usuario, password, consultas)
+
     resultado, facturas = [], []
     for uuid, c in lote["cfdis"].items():
         m = capturas.get(uuid)
@@ -212,6 +225,18 @@ def procesar_plantilla(lote_actual, contenido, capturista, nombre="plantilla.xls
             resultado.append(fila_cfdi(c, ESTADO_EXCLUIDA, [], [nota] + adv))
             continue
         motivos = validar_captura(m)
+        sitio = encontrado = None
+        if not motivos:
+            sitio = sitio_oracle(m)
+            encontrado = sitios.get(sitio)
+            if encontrado is None:
+                quien = "del colaborador" if a_quien(m)[0] == "colaborador" else "del proveedor"
+                motivos = [f"El sitio {sitio} no existe o está inactivo en Oracle {ambiente_oracle}; "
+                           f"revisa '# Colaborador' o da de alta el sitio {quien}"]
+            elif isinstance(encontrado, str):
+                motivos = [f"No se pudo buscar el sitio {sitio} en Oracle ({encontrado[7:]}); intenta de nuevo"]
+            else:
+                m[COL_PROVEEDOR] = encontrado["SupplierNumber"]
         pre = prefijo(m)
         if motivos:
             fila = fila_cfdi(c, ESTADO_ERROR, motivos, adv)
@@ -223,7 +248,9 @@ def procesar_plantilla(lote_actual, contenido, capturista, nombre="plantilla.xls
         facturas.append(f)
         fila = fila_cfdi(c, ESTADO_ORACLE_ADV if adv else ESTADO_ORACLE, [], adv)
         fila["uuid"] = f["InvoiceNumber"]   # PREFIJO-UUID si se capturó prefijo de prueba
-        fila.update({"colaborador": m["# Colaborador"], "descripcion": f["Description"],
+        fila.update({"colaborador": m["# Colaborador"], "sitio": sitio,
+                     "proveedor": f'{encontrado["SupplierNumber"]} {encontrado["Supplier"]}'.strip(),
+                     "descripcion": f["Description"],
                      "lineas": len(f["invoiceLines"]), "anticipo": m.get("Anticipo", "")})
         resultado.append(fila)
     extras = [u for u in capturas if u not in lote["cfdis"]]

@@ -42,6 +42,14 @@ def url_facturas(ambiente):
     return url_base(ambiente) + RUTA_FACTURAS
 
 
+# Ruta del recurso REST de proveedores (con sus sitios como hijo "sites")
+RUTA_PROVEEDORES = "/fscmRestApi/resources/11.13.18.05/suppliers"
+
+
+def url_proveedores(ambiente):
+    return url_base(ambiente) + RUTA_PROVEEDORES
+
+
 # ==========================================================
 #  Carga por FBDI (servicio erpintegrations)
 #  Valores tomados del proceso del robot (Proceso_Carga_Oracle.md / Config.xlsx).

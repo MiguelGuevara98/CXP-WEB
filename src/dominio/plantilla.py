@@ -30,13 +30,14 @@ COLUMNAS_XML = [
 COLUMNAS_IMPORTE = {"Subtotal", "IVA", "Total"}
 COLUMNAS_CANTIDAD = {"Cantidad"}
 COLUMNAS_TEXTO = {"UUID", "Serie", "Folio", "Forma pago"}
-ANCHOS_MANUALES = {"Incluir": 9, "# Colaborador": 14, "Número de proveedor": 14, "Descripción": 55, "Tipo de factura": 16,
+ANCHOS_MANUALES = {"Incluir": 9, "# Colaborador": 16, "Descripción": 55, "Tipo de factura": 16,
                    "Forma de pago": 20, "Subir factura a": 20, "Activo fijo": 16, "Anticipo": 40,
                    "Combinación contable": 52, "Prefijo de prueba": 14}
 AYUDA = {
     "Incluir": "Sí = se carga. No = se excluye del lote (por ejemplo, por una advertencia).",
-    "# Colaborador": "Número de colaborador dueño del gasto. Se usa para el sitio del proveedor (X + colaborador).",
-    "Número de proveedor": "Número de proveedor del colaborador en Oracle.",
+    "# Colaborador": "A quién se carga la factura. Colaborador: solo su número (ej. 90324086), se busca el sitio "
+                     "X90324086 en Oracle. Proveedor: su RFC (ej. CES911213AU1), se busca el sitio GTCES911213AU1. "
+                     "El número de proveedor se toma de Oracle.",
     "Descripción": "Información del ticket. Ej.: LIQ DE TICKET 13872999 PEAJES FACTURA EN TICKET 14095386",
     "Anticipo": "Número del anticipo a liquidar. Ej.: ANT-OPERACION TRANSPORTE TICKET 13872999 (opcional).",
     "Combinación contable": "Cuenta de Oracle de 8 segmentos. Ej.: 002-2500651001-073-5061701001-000000000-000-0000-0000",

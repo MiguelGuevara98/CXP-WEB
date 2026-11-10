@@ -80,7 +80,7 @@ def subir_plantilla(datos):
     if "plantilla" not in request.files:
         raise ErrorServicio("No se recibió la plantilla.")
     lote, respuesta = srv_lote.procesar_plantilla(
-        datos.get("lote"), request.files["plantilla"].read(), datos["usuario"],
+        datos.get("lote"), request.files["plantilla"].read(), datos["usuario"], sesion.credenciales(datos),
         request.files["plantilla"].filename or "plantilla.xlsx")
     with sesion.LOCK:
         datos["lote"] = lote   # puede ser un lote recuperado por el número de la plantilla

@@ -8,7 +8,8 @@ Reglas confirmadas contra 95 facturas reales en PROD:
 - Una línea Item por Concepto: importe redondeado a 2 decimales; descripción sin hashes del emisor,
   recortada a 235
 - Línea Tax con TotalImpuestosTrasladados (IVA 16%)
-- Sitio del proveedor = prefijo ("X") + número de colaborador
+- Sitio del proveedor = "X" + número de colaborador, o "GT" + RFC si el cargo es a un proveedor
+  (ver captura.sitio_oracle). SupplierNumber = el proveedor dueño de ese sitio en Oracle.
 - Anticipo aplicado por el total de la factura
 
 El resultado usa los nombres de campo del API REST de Oracle (/invoices).
@@ -16,8 +17,8 @@ El resultado usa los nombres de campo del API REST de Oracle (/invoices).
 from decimal import Decimal, ROUND_HALF_UP
 
 from src.dominio import catalogos as cat
-from src.dominio.captura import (COL_ACTIVO, COL_ANTICIPO, COL_COLABORADOR, COL_CUENTA, COL_DESCRIPCION,
-                                     COL_FORMA_PAGO, COL_PROVEEDOR, COL_SUBIR_A, COL_TIPO, prefijo)
+from src.dominio.captura import (COL_ACTIVO, COL_ANTICIPO, COL_CUENTA, COL_DESCRIPCION,
+                                     COL_FORMA_PAGO, COL_PROVEEDOR, COL_TIPO, prefijo, sitio_oracle)
 
 CENTAVO = Decimal("0.01")
 
@@ -35,7 +36,7 @@ def _num(v):
 def generar_factura(c, m, capturista):
     """
     c: CFDI (src.dominio.cfdi.parsear_cfdi)
-    m: dict con las columnas manuales
+    m: dict con las columnas manuales; m[COL_PROVEEDOR] = número de proveedor encontrado en Oracle para el sitio
     capturista: usuario que captura (aparece como 'Empleado' en la descripción)
     """
     uuid = c["UUID"]
@@ -46,7 +47,7 @@ def generar_factura(c, m, capturista):
     pre = prefijo(m)   # solo para pruebas: PREFIJO-<UUID> evita chocar con la factura real
     if pre:
         descripcion = f"{pre} | {descripcion}"
-    sitio = f"{cat.SUBIR_FACTURA_A[s(COL_SUBIR_A)]}{s(COL_COLABORADOR)}"
+    sitio = sitio_oracle(m)
     forma_pago = cat.FORMA_PAGO[s(COL_FORMA_PAGO)]
 
     lineas = []
