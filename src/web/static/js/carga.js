@@ -67,17 +67,18 @@ function celdaDetalle(f) {
     return td;
 }
 
-// A quién se carga la factura: mismas etiquetas que los datos faltantes, en color informativo
+// A quién se carga la factura (todo bien): mismas etiquetas que los datos faltantes, en verde
 function etiquetasAsignado(f) {
     const g = document.createElement('div');
     const t = document.createElement('p');
-    t.className = 'det-titulo det-titulo-info';
-    t.append(icono(ICONOS.usuario), document.createTextNode(f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador'));
+    t.className = 'det-titulo det-titulo-ok';
+    t.append(icono(ICONOS.check), document.createTextNode(
+        (f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador') + ' encontrado en Oracle'));
     const chips = document.createElement('div');
     chips.className = 'det-chips';
-    [`Sitio ${f.sitio}`, `${f.proveedor_numero} ${f.proveedor_nombre || ''}`.trim(),
-     `RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}`].forEach(c => {
-        const s = document.createElement('span'); s.className = 'det-chip det-chip-info'; s.textContent = c; chips.appendChild(s);
+    [`RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}`, `Sitio ${f.sitio}`,
+     `Proveedor ${f.proveedor_numero} ${f.proveedor_nombre || ''}`.trim()].forEach(c => {
+        const s = document.createElement('span'); s.className = 'det-chip det-chip-ok'; s.textContent = c; chips.appendChild(s);
     });
     g.append(t, chips);
     return g;

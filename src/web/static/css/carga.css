@@ -26,9 +26,9 @@
 .det-error { color: var(--color-text-error); }
 .det-aviso { color: var(--color-text-warning); }
 .det-info  { color: var(--color-text-soft); }
-/* Etiquetas de a quién se carga la factura (mismo estilo que las de datos faltantes, en azul informativo) */
-.det-titulo-info { color: var(--color-text-info); }
-.det-chip-info { background: #E5EEFF; color: var(--color-text-info); }
+/* Etiquetas de a quién se carga la factura cuando todo está bien (mismo estilo que las de datos faltantes, en verde) */
+.det-titulo-ok { color: var(--color-text-success); }
+.det-chip-ok { background: #E6F6EC; color: var(--color-text-success); }
 /* Línea de avance de la carga en Oracle */
 .linea-pasos { display: grid; grid-template-columns: repeat(4, 1fr); }
 .linea-pasos li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
