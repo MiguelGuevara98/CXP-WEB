@@ -250,6 +250,7 @@ def procesar_plantilla(lote_actual, contenido, capturista, credenciales, nombre=
         fila["uuid"] = f["InvoiceNumber"]   # PREFIJO-UUID si se capturó prefijo de prueba
         fila.update({"colaborador": m["# Colaborador"], "sitio": sitio,
                      "proveedor": f'{encontrado["SupplierNumber"]} {encontrado["Supplier"]}'.strip(),
+                     "rfc_proveedor": encontrado.get("Rfc") or "",
                      "descripcion": f["Description"],
                      "lineas": len(f["invoiceLines"]), "anticipo": m.get("Anticipo", "")})
         resultado.append(fila)

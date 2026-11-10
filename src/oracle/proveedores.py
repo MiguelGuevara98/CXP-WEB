@@ -2,7 +2,7 @@
 Búsqueda de sitios de proveedor en Oracle (solo lectura).
 
 buscar_sitios(ambiente, usuario, password, {sitio: rfc_o_None})
-    -> {sitio: {"SupplierNumber", "Supplier", "SupplierSite", "fuente"} | None | "ERROR: ..."}
+    -> {sitio: {"SupplierNumber", "Supplier", "SupplierSite", "Rfc", "fuente"} | None | "ERROR: ..."}
 
 Para cada sitio se intenta, en orden, hasta encontrarlo:
 1. Proveedor por RFC (solo sitios GT + RFC): suppliers?q=TaxpayerId='<RFC>' con sus sitios.
@@ -10,6 +10,7 @@ Para cada sitio se intenta, en orden, hasta encontrarlo:
    este filtro (HTTP 400) se ignora; si lo admite, se confirma que el sitio venga en los sitios del proveedor.
 3. Facturas anteriores con ese sitio: invoices?q=SupplierSite='<sitio>' (toma su SupplierNumber).
 Un sitio con InactiveDate vencida cuenta como no encontrado. None = no existe; "ERROR: ..." = no se pudo consultar.
+"Rfc" es el RFC del proveedor registrado en Oracle (TaxpayerId); vacío si no lo tiene o no se pudo leer.
 """
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
@@ -43,6 +44,19 @@ def _texto(v):
     return str(v or "").strip()
 
 
+def _rfc(proveedor):
+    return (_texto(proveedor.get("TaxpayerId")) or _texto(proveedor.get("TaxRegistrationNumber"))).upper()
+
+
+def _rfc_por_numero(proveedores, auth, numero):
+    """RFC del proveedor por su número (para lo encontrado en facturas anteriores). '' si no se puede leer."""
+    try:
+        items = _get(proveedores, auth, {"q": f"SupplierNumber='{numero}'", "limit": "1"})
+    except _ErrorConsulta:
+        return ""
+    return _rfc(items[0]) if items else ""
+
+
 def _sitio_activo(s):
     fin = _texto(s.get("InactiveDate"))[:10]
     return not fin or fin > date.today().isoformat()
@@ -61,7 +75,7 @@ def _en_proveedores(items, sitio):
             if _texto(s.get("SupplierSite")).upper() == sitio:
                 if _sitio_activo(s):
                     return {"SupplierNumber": _texto(p.get("SupplierNumber")), "Supplier": _texto(p.get("Supplier")),
-                            "SupplierSite": _texto(s.get("SupplierSite"))}, False
+                            "SupplierSite": _texto(s.get("SupplierSite")), "Rfc": _rfc(p)}, False
                 inactivo = True
     return None, inactivo
 
@@ -90,8 +104,10 @@ def buscar_sitio(ambiente, auth, sitio, rfc=None):
                                                 "fields": "SupplierNumber,Supplier,SupplierSite"})
     for f in items:
         if _texto(f.get("SupplierSite")).upper() == sitio and _texto(f.get("SupplierNumber")):
-            return {"SupplierNumber": _texto(f["SupplierNumber"]), "Supplier": _texto(f.get("Supplier")),
-                    "SupplierSite": _texto(f["SupplierSite"]), "fuente": "factura anterior"}
+            numero = _texto(f["SupplierNumber"])
+            return {"SupplierNumber": numero, "Supplier": _texto(f.get("Supplier")),
+                    "SupplierSite": _texto(f["SupplierSite"]), "Rfc": _rfc_por_numero(proveedores, auth, numero),
+                    "fuente": "factura anterior"}
     return None
 
 

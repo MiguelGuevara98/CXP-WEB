@@ -56,7 +56,7 @@ function celdaDetalle(f) {
     };
     errores.forEach(m => linea(m, 'det-error', ICONOS.error));
     (f.advertencias || []).forEach(a => linea(a, 'det-aviso', ICONOS.alerta));
-    if (f.descripcion) linea(`${f.lineas} línea(s) · sitio ${f.sitio || f.colaborador}` + (f.proveedor ? ` · proveedor ${f.proveedor}` : '') + (f.anticipo ? ` · anticipo ${f.anticipo}` : ''), 'det-info');
+    if (f.descripcion) linea(`${f.lineas} línea(s) · sitio ${f.sitio || f.colaborador}` + (f.proveedor ? ` · proveedor ${f.proveedor}` : '') + (f.proveedor ? ` · RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}` : '') + (f.anticipo ? ` · anticipo ${f.anticipo}` : ''), 'det-info');
     if (!caja.childNodes.length) linea('-', 'det-info');
     return td;
 }

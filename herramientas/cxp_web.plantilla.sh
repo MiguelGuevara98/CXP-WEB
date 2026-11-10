@@ -182,7 +182,7 @@ for v, sitio, info in filas:
     elif isinstance(r, str):
         print(f"  {v:<16} sitio {sitio:<18} {r}")
     else:
-        print(f"  {v:<16} sitio {sitio:<18} proveedor {r['SupplierNumber']} {r['Supplier']}  (encontrado por: {r['fuente']})")
+        print(f"  {v:<16} sitio {sitio:<18} proveedor {r['SupplierNumber']} {r['Supplier']}  RFC {r.get('Rfc') or 'sin RFC en Oracle'}  (encontrado por: {r['fuente']})")
 PYEOF
   )
 }
