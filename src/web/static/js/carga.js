@@ -57,7 +57,7 @@ function celdaDetalle(f) {
     errores.forEach(m => linea(m, 'det-error', ICONOS.error));
     (f.advertencias || []).forEach(a => linea(a, 'det-aviso', ICONOS.alerta));
     if (f.descripcion) {
-        if (f.proveedor_numero) caja.appendChild(tarjetaAsignado(f));
+        if (f.proveedor_numero) caja.appendChild(etiquetasAsignado(f));
         const extra = [`${f.lineas} ${f.lineas === 1 ? 'línea' : 'líneas'}`];
         if (!f.proveedor_numero) extra.push(`colaborador ${f.colaborador}`);
         if (f.anticipo) extra.push(`anticipo ${f.anticipo}`);
@@ -67,31 +67,20 @@ function celdaDetalle(f) {
     return td;
 }
 
-// A quién se carga la factura: tipo + sitio, nombre del proveedor en Oracle, número y RFC
-function tarjetaAsignado(f) {
-    const el = (tag, clase, texto) => {
-        const n = document.createElement(tag);
-        if (clase) n.className = clase;
-        if (texto !== undefined) n.textContent = texto;
-        return n;
-    };
-    const card = el('div', 'det-asignado');
-    const top = el('div', 'det-asig-top');
-    const tag = el('span', 'det-tag ' + (f.tipo_cargo === 'proveedor' ? 'det-tag-prov' : 'det-tag-colab'));
-    tag.append(icono(ICONOS.usuario), document.createTextNode(f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador'));
-    const sitio = el('span', 'det-sitio', f.sitio);
-    sitio.title = 'Sitio del proveedor en Oracle';
-    top.append(tag, sitio);
-    card.append(top, el('div', 'det-nombre', f.proveedor_nombre || '-'));
-    const datos = el('dl', 'det-datos');
-    [['No. proveedor', f.proveedor_numero], ['RFC', f.rfc_proveedor || 'Sin RFC en Oracle']].forEach(([k, v]) => {
-        const par = el('div');
-        const dd = el('dd', !f.rfc_proveedor && k === 'RFC' ? 'det-vacio' : '', v);
-        par.append(el('dt', '', k), dd);
-        datos.appendChild(par);
+// A quién se carga la factura: mismas etiquetas que los datos faltantes, en color informativo
+function etiquetasAsignado(f) {
+    const g = document.createElement('div');
+    const t = document.createElement('p');
+    t.className = 'det-titulo det-titulo-info';
+    t.append(icono(ICONOS.usuario), document.createTextNode(f.tipo_cargo === 'proveedor' ? 'Proveedor' : 'Colaborador'));
+    const chips = document.createElement('div');
+    chips.className = 'det-chips';
+    [`Sitio ${f.sitio}`, `${f.proveedor_numero} ${f.proveedor_nombre || ''}`.trim(),
+     `RFC ${f.rfc_proveedor || 'sin RFC en Oracle'}`].forEach(c => {
+        const s = document.createElement('span'); s.className = 'det-chip det-chip-info'; s.textContent = c; chips.appendChild(s);
     });
-    card.appendChild(datos);
-    return card;
+    g.append(t, chips);
+    return g;
 }
 
 function renderLote(filas, titulo) {

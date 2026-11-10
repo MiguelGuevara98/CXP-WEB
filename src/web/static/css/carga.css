@@ -26,24 +26,9 @@
 .det-error { color: var(--color-text-error); }
 .det-aviso { color: var(--color-text-warning); }
 .det-info  { color: var(--color-text-soft); }
-/* Tarjeta "a quién se carga" (sitio y proveedor encontrados en Oracle) */
-.det-asignado { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--rounded-sm);
-                background: var(--color-bg-0); border: 1px solid var(--color-bg-inactive); max-width: 340px; }
-.det-asig-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.det-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--rounded-full);
-           font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; white-space: nowrap; }
-.det-tag .icon { width: 12px; height: 12px; }
-.det-tag-colab { background: #E5EEFF; color: var(--color-text-info); }
-.det-tag-prov  { background: #FFF6CC; color: #7A5A00; }
-.det-sitio { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; font-weight: 600;
-             color: var(--color-text); background: var(--color-bg-body); border: 1px solid var(--color-border);
-             padding: 1px 8px; border-radius: 6px; white-space: nowrap; }
-.det-nombre { font-size: 13px; font-weight: 600; color: var(--color-text); line-height: 18px; }
-.det-datos { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 0; }
-.det-datos dt { font-size: 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-inactive); }
-.det-datos dd { margin: 0; font-size: 12px; font-weight: 500; color: var(--color-text-soft);
-                font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-.det-datos dd.det-vacio { font-family: inherit; font-style: italic; color: var(--color-text-inactive); }
+/* Etiquetas de a quién se carga la factura (mismo estilo que las de datos faltantes, en azul informativo) */
+.det-titulo-info { color: var(--color-text-info); }
+.det-chip-info { background: #E5EEFF; color: var(--color-text-info); }
 /* Línea de avance de la carga en Oracle */
 .linea-pasos { display: grid; grid-template-columns: repeat(4, 1fr); }
 .linea-pasos li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px;
