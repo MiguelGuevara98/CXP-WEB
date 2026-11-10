@@ -1,198 +1,97 @@
-# Pruebas y actualización de CXP-WEB en Cloud Shell
+# CXP-WEB en Cloud Shell: un solo script
 
-Esta carpeta trae dos scripts para actualizar y probar el proyecto en Cloud Shell.
-**Cloud Shell nunca se conecta a GitHub.** Los archivos se descargan en la PC desde el
-navegador y se suben a Cloud Shell con el menú **⋮ → Upload**.
+Todo está en **`cxp_web.sh`**: actualizar el proyecto, verificarlo, reiniciar la app y las pruebas.
+**Cloud Shell nunca se conecta a GitHub**: el código del proyecto va dentro del script.
 
-| Archivo | Para qué sirve |
+## 1. Descargarlo en la PC
+
+Abre `pruebas/cxp_web.sh` en GitHub y usa el botón de descarga (⤓ *Download raw file*).
+Si ya tenías uno anterior, bórralo antes de Descargas; si Windows lo guarda como `cxp_web (1).sh`,
+renómbralo a `cxp_web.sh`.
+
+## 2. Subirlo a Cloud Shell
+
+**⋮ (tres puntos) → Upload** → elige `cxp_web.sh`. Queda en tu carpeta home (`~`).
+
+## 3. Ejecutarlo
+
+```bash
+cd ~ && bash cxp_web.sh
+```
+
+Hace todo en orden:
+
+1. Guarda un respaldo de la versión actual en `~/cxp-web-respaldo-<fecha>.tar.gz`.
+2. Reemplaza `src/`, `run.py`, `requirements.txt` y `.gitignore` (no toca `venv/` ni `.secret_key`).
+3. Verifica que estén todos los cambios (deben salir 4 `[OK]`).
+4. Pregunta si quieres iniciar la app con la versión nueva. Si respondes **S**, detiene la app
+   anterior de este proyecto (si estaba corriendo) y la inicia en esa terminal.
+
+Si el script llegó incompleto, se detiene sin cambiar nada.
+
+## Opciones
+
+| Comando | Qué hace |
 |---|---|
-| `actualizar_cxp_web.sh` | Actualiza el proyecto en Cloud Shell a la versión de esta rama. Trae todo el código adentro, no descarga nada. |
-| `verificar_actualizacion.sh` | Revisa si el proyecto ya tiene esta versión y si la app necesita reiniciarse. No modifica nada. |
-| `probar_sitio_oracle.sh` | Busca en Oracle el sitio de un colaborador o proveedor, igual que la app, y muestra el número de proveedor que encuentra. Solo lectura. |
-| `probar_lectura_xml.sh` | Lee uno o varios XML/zip y muestra descripción, cantidad y unidad de cada concepto. Genera una plantilla de Excel de prueba. No se conecta a Oracle ni a Google. |
+| `bash cxp_web.sh` | Actualiza, verifica y ofrece iniciar la app |
+| `bash cxp_web.sh verificar` | Solo revisa si el proyecto tiene esta versión y si la app debe reiniciarse |
+| `bash cxp_web.sh iniciar` | Detiene la app de este proyecto si está corriendo y la vuelve a iniciar |
+| `bash cxp_web.sh probar-xml ~/FACTURA.xml` | Lee XML o zip, muestra descripción, cantidad y unidad, y genera `~/plantilla_prueba.xlsx` |
+| `bash cxp_web.sh probar-sitio DEV 90324086 CES911213AU1` | Busca en Oracle los sitios `X90324086` y `GTCES911213AU1` y muestra su proveedor (pide usuario y contraseña; no se guardan) |
+| `bash cxp_web.sh ayuda` | Muestra las opciones |
+
+Si el proyecto no está en `~/cxp-web`: `PROYECTO=/ruta/al/proyecto bash cxp_web.sh`.
+
+Para regresar a la versión anterior: `cd ~/cxp-web && tar xzf ~/cxp-web-respaldo-<fecha>.tar.gz`.
 
 ## Qué incluye esta versión
 
-- La descripción del concepto se limpia de los códigos (hash) que algunos emisores pegan al final.
-  Ejemplo: `DESINSECTACION DE CHASIS a7ebf2a9f246...` queda como `DESINSECTACION DE CHASIS`.
-- La plantilla de Excel (hoja **Facturas**) tiene la columna **Cantidad** junto a **Primer concepto**.
-- La hoja **Conceptos** tiene la columna **Unidad**.
-- A Oracle se envía la descripción limpia.
-- Las carpetas de Cloud Storage tienen nombres que dicen qué contienen y en qué paso se generan:
+- **Descripción limpia:** se quita el código (hash) que algunos emisores pegan al final.
+  `DESINSECTACION DE CHASIS a7ebf2a9f246...` queda como `DESINSECTACION DE CHASIS`. A Oracle va limpia.
+- **Columna Cantidad** junto a *Primer concepto* en la hoja **Facturas**; columna **Unidad** en la hoja **Conceptos**.
+- **Carpetas de Cloud Storage con nombres descriptivos** (aparecen solas con el primer lote nuevo; las
+  anteriores no se renombran y conservan la evidencia de los lotes pasados):
 
   | Antes | Ahora | Qué contiene |
   |---|---|---|
-  | `original/` | `1_xml_recibidos/` | Los XML, zip o carpeta que sube el usuario (o que se traen de Drive), tal cual llegaron. |
-  | `plantillas/` | `2_plantillas_capturadas/` | Cada versión del Excel ya llenado que sube el colaborador (`plantilla_v1_...`, `plantilla_v2_...`). |
-  | `fbdi/` | `3_envios_oracle/` | El zip FBDI enviado a Oracle y `resultado.json` con la respuesta. |
+  | `original/` | `1_xml_recibidos/` | Los XML o zip subidos (o traídos de Drive), tal cual llegaron |
+  | `plantillas/` | `2_plantillas_capturadas/` | Cada versión del Excel llenado por el colaborador |
+  | `fbdi/` | `3_envios_oracle/` | El zip enviado a Oracle y `resultado.json` con la respuesta |
 
-  Lo que ya estaba guardado con los nombres anteriores se queda donde está; los lotes nuevos usan los nombres nuevos.
-- **Columna `# Colaborador`: a quién se carga la factura.** La app busca el sitio en Oracle y de ahí toma
-  el número de proveedor:
+- **Columna `# Colaborador`: a quién se carga la factura.** La app busca el sitio en Oracle y de ahí
+  toma el número de proveedor:
 
   | Se captura | Ejemplo | Sitio que se busca en Oracle |
   |---|---|---|
   | Número de colaborador (sin la X) | `90324086` | `X90324086` |
   | RFC del proveedor (sin GT) | `CES911213AU1` | `GTCES911213AU1` |
 
-  - La app distingue sola si es colaborador (solo números) o proveedor (RFC). Si escriben el prefijo por
-    error (`X90324086` o `GTCES911213AU1`) también lo acepta.
-  - La columna **Número de proveedor** ya no está en la plantilla: se llena con el proveedor dueño del sitio.
-  - Si el sitio no existe o está inactivo en Oracle, la factura sale **con error** y no se carga;
-    las demás del lote sí.
-  - En la pantalla, cada factura lista para Oracle muestra el sitio y el proveedor encontrado.
+  - Distingue sola si es colaborador (solo números) o proveedor (RFC); acepta el prefijo si lo escriben.
+  - La columna **Número de proveedor** ya no está en la plantilla: se llena desde Oracle.
+  - Si el sitio no existe o está inactivo, esa factura sale **con error** y no se carga; las demás sí.
+  - Descarga una plantilla nueva después de actualizar (las anteriores todavía piden *Número de proveedor*).
 
-## Paso 1. Descargar los scripts en la PC
+## Si algo no sale bien
 
-En el navegador, abre cada archivo de esta carpeta en GitHub y usa el botón de descarga
-(⤓ *Download raw file*):
-
-- `pruebas/actualizar_cxp_web.sh`
-- `pruebas/verificar_actualizacion.sh`
-- `pruebas/probar_sitio_oracle.sh`
-- `pruebas/probar_lectura_xml.sh`
-
-Si ya habías descargado una versión anterior, **bórrala primero de Descargas**. Si Windows guarda el
-nuevo como `actualizar_cxp_web (1).sh`, renómbralo a `actualizar_cxp_web.sh` antes de subirlo.
-
-## Paso 2. Subirlos a Cloud Shell
-
-En Cloud Shell: **⋮ (tres puntos) → Upload**, elige los archivos y haz clic en **Upload**.
-Quedan en la carpeta home (`~`).
-
-## Paso 3. Actualizar el proyecto
-
-Confirma que subiste la versión más reciente del script (la línea debe terminar con el commit
-indicado en la primera línea de `actualizar_cxp_web.sh` en GitHub):
-
-```bash
-head -2 ~/actualizar_cxp_web.sh
-```
-
-Ejecútalo:
-
-```bash
-cd ~ && bash actualizar_cxp_web.sh ~/cxp-web
-```
-
-- Guarda antes un respaldo en `~/cxp-web-respaldo-<fecha>.tar.gz`.
-- Reemplaza `src/`, `run.py`, `requirements.txt` y `.gitignore`.
-- No toca `venv/` ni `.secret_key`.
-
-Para regresar a la versión anterior (si hiciera falta):
-
-```bash
-cd ~/cxp-web && tar xzf ~/cxp-web-respaldo-<fecha>.tar.gz
-```
-
-## Paso 4. Verificar la actualización
-
-```bash
-cd ~ && bash verificar_actualizacion.sh ~/cxp-web
-```
-
-Salida esperada:
-
-```
-Cambios de esta versión:
-  [OK]    Descripción del concepto sin hash del emisor
-  [OK]    Columna Cantidad en la plantilla de Excel
-  [OK]    Carpetas de Storage: 1_xml_recibidos, 2_plantillas_capturadas, 3_envios_oracle
-```
-
-Si aparece `[FALTA]`, el script que subiste era una versión anterior: vuelve al paso 1.
-Si aparece `[REINICIAR]`, la app sigue con el código anterior: ve al paso 6.
-
-## Paso 5. Probar la lectura de XML
-
-Sube uno o varios XML (o un zip) a Cloud Shell con **⋮ → Upload** y ejecuta:
-
-```bash
-cd ~ && bash probar_lectura_xml.sh ~/MI_FACTURA.xml
-```
-
-Varios a la vez:
-
-```bash
-cd ~ && bash probar_lectura_xml.sh ~/*.xml
-```
-
-Salida esperada (ejemplo con la factura ED-61930):
-
-```
-CES911213AU1_FACTURA_CFDi-ED61930_COP920428Q20.xml  UUID 41ACD15B-8B61-44C4-97EC-CF8FDACCDDCA  Total 1600.00
-  1. Descripción: DESINSECTACION DE CHASIS
-     Cantidad:    16   Unidad: SERVICIO
-     (en el XML venía: DESINSECTACION DE CHASIS a7ebf2a9f246eef13f71463faf1fc792617...)
-
-Plantilla de prueba: /home/<usuario>/plantilla_prueba.xlsx
-```
-
-Para revisar la plantilla de prueba en Excel:
-
-```bash
-cloudshell download ~/plantilla_prueba.xlsx
-```
-
-## Paso 5b. Probar la búsqueda de sitios en Oracle
-
-Con números de colaborador o RFC reales (pide usuario y contraseña de Oracle; no se guardan):
-
-```bash
-cd ~ && bash probar_sitio_oracle.sh DEV 90324086 CES911213AU1
-```
-
-Salida esperada:
-
-```
-Ambiente DEV
-  90324086         sitio X90324086          proveedor 12345 NOMBRE DEL COLABORADOR  (encontrado por: ...)
-  CES911213AU1     sitio GTCES911213AU1     proveedor 67890 NOMBRE DEL PROVEEDOR    (encontrado por: proveedor por RFC)
-```
-
-`encontrado por` indica cómo se encontró: `proveedor por RFC`, `proveedor por sitio` o `factura anterior`
-(un colaborador que ya tuvo facturas con ese sitio). Si sale `NO ENCONTRADO` para un sitio que sí existe,
-o `ERROR: HTTP 403`, avisa: puede faltar el permiso de consulta de proveedores (View Supplier Site) al usuario.
-
-## Paso 6. Reiniciar la app
-
-Si la app está corriendo, detenla con **Ctrl+C** y vuelve a iniciarla:
-
-```bash
-cd ~/cxp-web && source venv/bin/activate && python run.py
-```
-
-Después, genera una plantilla desde la app y confirma que aparezcan la columna **Cantidad**
-y la descripción sin el código largo.
-
-## Paso 7. Revisar Cloud Storage
-
-Con la app reiniciada, procesa un lote nuevo. Las carpetas nuevas aparecen solas, no hay que crearlas
-ni renombrar nada a mano:
-
-| Acción en la app | Carpeta que aparece |
+| Síntoma | Qué hacer |
 |---|---|
-| Subir XML o traer de Drive | `cxp_facturas/1_xml_recibidos/AAAA/MM/DD/<lote>/` |
-| Subir la plantilla llena | `cxp_facturas/2_plantillas_capturadas/AAAA/MM/DD/<lote>/` |
-| Cargar a Oracle | `cxp_facturas/3_envios_oracle/AAAA/MM/DD/<lote>/` |
-
-Las carpetas anteriores (`original/`, `plantillas/`, `fbdi/`) se siguen viendo porque **no se
-renombran**: ahí queda la evidencia de los lotes anteriores y BigQuery guarda esas rutas. Ya no
-reciben archivos nuevos.
-
-## Si algo no cambió
-
-| Síntoma | Causa | Qué hacer |
-|---|---|---|
-| `verificar_actualizacion.sh` marca `[FALTA]` | Se subió un script anterior | Borrar el script de Descargas, descargarlo de nuevo, subirlo y repetir el paso 3 |
-| Marca `[REINICIAR]` | La app arrancó antes de actualizar | Ctrl+C en la terminal de la app y paso 6 |
-| Todo `[OK]` pero no aparecen las carpetas nuevas | Aún no se procesa un lote nuevo | Subir XML desde la app y revisar el bucket |
-| La plantilla no trae la columna Cantidad | Es una plantilla generada antes de reiniciar | Generar una plantilla nueva |
-| "El sitio X... no existe o está inactivo" | El colaborador o proveedor no tiene ese sitio activo en Oracle, o el número/RFC está mal | Revisar con `probar_sitio_oracle.sh` y, si falta, darlo de alta en Oracle |
-| "No se pudo buscar el sitio ... (HTTP 401/403)" | El usuario de Oracle no tiene permiso de consultar proveedores | Pedir el permiso de consulta de proveedores y sitios |
+| `verificar` marca `[FALTA]` | El script es una versión anterior: descárgalo de nuevo y corre `bash cxp_web.sh` |
+| `verificar` marca `[REINICIAR]` | `bash cxp_web.sh iniciar` |
+| No aparecen las carpetas nuevas de Storage | Se crean con el primer lote procesado después de reiniciar |
+| "El sitio X... no existe o está inactivo" | Revisar con `probar-sitio`; si falta, darlo de alta en Oracle |
+| `probar-sitio` da `NO ENCONTRADO` en un sitio que sí existe, o `HTTP 401/403` | Al usuario de Oracle puede faltarle permiso de consultar proveedores y sitios; mandar la captura |
 
 ## Seguridad
 
-- Cloud Shell no se conecta a GitHub: todo pasa por la PC.
-- `.secret_key` nunca se sube al repositorio. La clave anterior quedó expuesta en el historial de
-  `main`; para generar una nueva: `rm ~/cxp-web/.secret_key` y reiniciar la app (los usuarios vuelven a iniciar sesión).
+- `.secret_key` nunca se sube al repositorio. La clave anterior quedó expuesta en el historial de `main`;
+  para generar una nueva: `rm ~/cxp-web/.secret_key` y `bash cxp_web.sh iniciar` (los usuarios vuelven a iniciar sesión).
+
+## Para quien mantiene el repo
+
+`cxp_web.sh` se genera; no se edita a mano. Después de hacer commit de cambios en `src/`:
+
+```bash
+python3 herramientas/generar_cxp_web_sh.py
+```
+
+La lógica del script está en `herramientas/cxp_web.plantilla.sh`.
